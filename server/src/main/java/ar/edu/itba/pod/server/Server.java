@@ -1,0 +1,19 @@
+package ar.edu.itba.pod.server;
+
+import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.HazelcastInstance;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Map;
+
+public class Server {
+    private static Logger logger = LoggerFactory.getLogger(Server.class);
+
+    public static void main(String[] args) {
+
+        HazelcastInstance hz = Hazelcast.newHazelcastInstance();
+
+        logger.info("pod-map-reduce Server Starting ...");
+    }
+}

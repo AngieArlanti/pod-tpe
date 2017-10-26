@@ -1,0 +1,17 @@
+/local.properties
+/.idea/workspace.xml
+/.idea/libraries
+.DS_Store
+/build
+.idea/
+*.iml
+*.log
+*/target/**
+*/out/**
+/classes
+.classpath
+.project
+.settings/
+bin/
+*.iws
+*.ipr
