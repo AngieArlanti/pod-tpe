@@ -1,4 +1,4 @@
-package ar.edu.itba.pod;
+package ar.edu.itba.pod.example;
 
 import com.hazelcast.mapreduce.Context;
 

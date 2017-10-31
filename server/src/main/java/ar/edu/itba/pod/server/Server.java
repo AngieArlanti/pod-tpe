@@ -5,7 +5,6 @@ import com.hazelcast.core.HazelcastInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
 
 public class Server {
     private static Logger logger = LoggerFactory.getLogger(Server.class);

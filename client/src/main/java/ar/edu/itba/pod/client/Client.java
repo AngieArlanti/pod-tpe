@@ -1,7 +1,7 @@
 package ar.edu.itba.pod.client;
 
-import ar.edu.itba.pod.TokenizerMapper;
-import ar.edu.itba.pod.WordCountReducerFactory;
+import ar.edu.itba.pod.example.TokenizerMapper;
+import ar.edu.itba.pod.example.WordCountReducerFactory;
 import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.core.HazelcastInstance;
