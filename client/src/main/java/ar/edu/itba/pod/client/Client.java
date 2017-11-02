@@ -200,6 +200,4 @@ public class Client {
         }
         return provinceDepartments;
     }
-
-
 }
