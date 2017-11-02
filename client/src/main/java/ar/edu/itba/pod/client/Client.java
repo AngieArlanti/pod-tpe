@@ -118,23 +118,24 @@ public class Client {
         Map<String, Long> result = future.get();
         logger.info("RESULTS: "+result.toString());
 
+        query2(hz, "census100.csv", "Buenos Aires", 5);
     }
 
     /* *********************************************************** */
     /* ************************* QUERY 2 ************************* */
     /* *********************************************************** */
 
-    private static void query2(HazelcastInstance hz) {
-        JobTracker jobTracker = hz.getJobTracker("departmentCount");
+    private static void query2(HazelcastInstance hz, String fileName, String provinceName, int n) {
+        JobTracker jobTracker = hz.getJobTracker("departmentCount"+hz.hashCode());
 
-        IMap<String,Collection<Long>> map = getQuery2Map(hz, "census100.csv", "Buenos Aires");
+        IMap<String,Collection<Long>> map = getQuery2Map(hz, fileName, provinceName);
 
         final KeyValueSource<String, Collection<Long>> source = KeyValueSource.fromMap(map);
         Job<String, Collection<Long>> job = jobTracker.newJob(source);
         ICompletableFuture<Map<String, Long>> future = job
                 .mapper(new Query2Mapper())
                 .reducer(new Query2CountReducerFactory())
-                .submit(new Query2CountCollator(2, hz));
+                .submit(new Query2CountCollator(n, hz));
 
         Map<String, Long> result = null;
         // TODO --> Check what to do with these exceptions
@@ -150,7 +151,7 @@ public class Client {
     }
 
     private static IMap<String, Collection<Long>> getQuery2Map(HazelcastInstance client, String fileName, String provinceName) {
-        IMap<String, Collection<Long>> provinceDepartments = client.getMap(provinceName.concat("Departments3"));
+        IMap<String, Collection<Long>> provinceDepartments = client.getMap(provinceName.concat("Departments3"+client.hashCode()));
 
         BufferedReader br;
         String line = "";
