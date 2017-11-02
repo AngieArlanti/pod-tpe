@@ -118,6 +118,7 @@ public class Client {
         logger.info("RESULTS: "+result.toString());
 
         query2(hz, "census100.csv", "Buenos Aires", 5);
+
     }
 
     /* *********************************************************** */
@@ -127,10 +128,10 @@ public class Client {
     private static void query2(HazelcastInstance hz, String fileName, String provinceName, int n) {
         JobTracker jobTracker = hz.getJobTracker("departmentCount");
 
-        IMap<String,Collection<Long>> map = getQuery2Map(hz, fileName, provinceName);
+        IMap<String,Long> map = getQuery2Map(hz, fileName, provinceName);
 
-        final KeyValueSource<String, Collection<Long>> source = KeyValueSource.fromMap(map);
-        Job<String, Collection<Long>> job = jobTracker.newJob(source);
+        final KeyValueSource<String, Long> source = KeyValueSource.fromMap(map);
+        Job<String, Long> job = jobTracker.newJob(source);
         ICompletableFuture<Map<String, Long>> future = job
                 .mapper(new Query2Mapper())
                 .reducer(new Query2CountReducerFactory())
@@ -149,8 +150,8 @@ public class Client {
         logger.info("RESULTS: "+result.toString());
     }
 
-    private static IMap<String, Collection<Long>> getQuery2Map(HazelcastInstance client, String fileName, String provinceName) {
-        IMap<String, Collection<Long>> provinceDepartments = client.getMap(provinceName.concat("Departments"));
+    private static IMap<String, Long> getQuery2Map(HazelcastInstance client, String fileName, String provinceName) {
+        IMap<String, Long> provinceDepartments = client.getMap(provinceName.concat("Departments"));
         provinceDepartments.clear();
 
         BufferedReader br;
@@ -166,9 +167,8 @@ public class Client {
                 String[] csvLine = line.split(cvsSplitBy);
                 if (csvLine[3].equals(provinceName)) {
                     if (!provinceDepartments.containsKey(csvLine[2]))
-                        provinceDepartments.put(csvLine[2], new ArrayList<>());
-                    Collection<Long> aux = provinceDepartments.get(csvLine[2]);
-                    aux.add(new Long(csvLine[1]));
+                        provinceDepartments.put(csvLine[2], new Long(0));
+                    Long aux = provinceDepartments.get(csvLine[2]) + 1;
                     provinceDepartments.put(csvLine[2], aux);
                 }
             }

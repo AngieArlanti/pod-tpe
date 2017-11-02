@@ -8,13 +8,11 @@ import java.util.StringTokenizer;
 /**
  * Created by sebastian on 10/31/17.
  */
-public class Query2Mapper implements com.hazelcast.mapreduce.Mapper<String, Collection<Long>, String, Long> {
+public class Query2Mapper implements com.hazelcast.mapreduce.Mapper<String, Long, String, Long> {
 
     // TODO make this more efficient
     @Override
-    public void map(String s, Collection<Long> longs, Context<String, Long> context) {
-        for (Long l : longs) {
-            context.emit(s, l);
-        }
+    public void map(String s, Long l, Context<String, Long> context) {
+        context.emit(s, l);
     }
 }
