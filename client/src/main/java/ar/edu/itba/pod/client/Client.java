@@ -1,7 +1,5 @@
 package ar.edu.itba.pod.client;
 
-
-
 import ar.edu.itba.pod.example.TokenizerMapper;
 import ar.edu.itba.pod.example.WordCountReducerFactory;
 
@@ -12,6 +10,9 @@ import ar.edu.itba.pod.query1.ProvinceRegionReducerFactory;
 //import ar.edu.itba.pod.query4.HogarCountCollator;
 //import ar.edu.itba.pod.query4.HogarCountMapper;
 //import ar.edu.itba.pod.query4.HogarCountReducerFactory;
+
+
+import ar.edu.itba.pod.query2.Query2CountCollator;
 
 
 import ar.edu.itba.pod.query2.Query2CountCollator;
@@ -44,12 +45,14 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.URL;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+
 import java.util.ArrayList;
 import java.util.Collection;
 
