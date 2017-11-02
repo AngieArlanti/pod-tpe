@@ -1,9 +1,9 @@
 package ar.edu.itba.pod.client;
 
 
+
 import ar.edu.itba.pod.example.TokenizerMapper;
 import ar.edu.itba.pod.example.WordCountReducerFactory;
-<<<<<<< ac21cb594117a06ef785744d07d127777245930d
 
 import ar.edu.itba.pod.model.Data;
 import ar.edu.itba.pod.query1.ProvinceRegionCollator;
@@ -22,16 +22,19 @@ import ar.edu.itba.pod.query2.Query2Mapper;
 import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.core.*;
-=======
+
 import ar.edu.itba.pod.query2.Query2CountReducerFactory;
 import ar.edu.itba.pod.query2.Query2Mapper;
 import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.client.config.ClientConfig;
+
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ICompletableFuture;
 import com.hazelcast.core.IList;
 import com.hazelcast.core.IMap;
->>>>>>> trying to make query2
+
+import com.hazelcast.core.*;
+
 import com.hazelcast.mapreduce.Job;
 import com.hazelcast.mapreduce.JobTracker;
 import com.hazelcast.mapreduce.KeyValueSource;
@@ -39,17 +42,17 @@ import com.hazelcast.mapreduce.KeyValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-<<<<<<< ac21cb594117a06ef785744d07d127777245930d
 import java.io.*;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
-=======
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
->>>>>>> trying to make query2
+import java.util.ArrayList;
+import java.util.Collection;
+
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
@@ -62,7 +65,6 @@ public class Client {
 
         final ClientConfig config = new ClientConfig();
         final HazelcastInstance hz = HazelcastClient.newHazelcastClient(config);
-
 
         /*  query example
         JobTracker jobTracker = hz.getJobTracker("word-count");
@@ -136,8 +138,6 @@ public class Client {
 
         Map<String, Long> result = future.get();
         logger.info("RESULTS: "+result.toString());
-
-        query2(hz, "census100.csv", "Buenos Aires", 5);
     }
 
     /* *********************************************************** */
