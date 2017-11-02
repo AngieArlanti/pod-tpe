@@ -1,5 +1,6 @@
 package ar.edu.itba.pod.client;
 
+
 import ar.edu.itba.pod.example.TokenizerMapper;
 import ar.edu.itba.pod.example.WordCountReducerFactory;
 
@@ -11,18 +12,17 @@ import ar.edu.itba.pod.query1.ProvinceRegionReducerFactory;
 //import ar.edu.itba.pod.query4.HogarCountMapper;
 //import ar.edu.itba.pod.query4.HogarCountReducerFactory;
 
+
 import ar.edu.itba.pod.query2.Query2CountReducerFactory;
 import ar.edu.itba.pod.query2.Query2Mapper;
 
 import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.client.config.ClientConfig;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.ICompletableFuture;
-import com.hazelcast.core.IList;
-import com.hazelcast.core.IMap;
+import com.hazelcast.core.*;
 import com.hazelcast.mapreduce.Job;
 import com.hazelcast.mapreduce.JobTracker;
 import com.hazelcast.mapreduce.KeyValueSource;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +30,8 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
@@ -115,6 +117,7 @@ public class Client {
 
         Map<String, Long> result = future.get();
         logger.info("RESULTS: "+result.toString());
+
     }
 
     /* *********************************************************** */
@@ -122,12 +125,12 @@ public class Client {
     /* *********************************************************** */
 
     private static void query2(HazelcastInstance hz) {
-        JobTracker jobTracker = hz.getJobTracker("word-count");
+        JobTracker jobTracker = hz.getJobTracker("departmentCount");
 
-        IMap<String,Long> map = getQuery2Map(hz, "census100.csv", "Santa Fe");
+        IMap<String,Collection<Long>> map = getQuery2Map(hz, "census100.csv", "Corrientes");
 
-        final KeyValueSource<String, Long> source = KeyValueSource.fromMap(map);
-        Job<String, Long> job = jobTracker.newJob(source);
+        final KeyValueSource<String, Collection<Long>> source = KeyValueSource.fromMap(map);
+        Job<String, Collection<Long>> job = jobTracker.newJob(source);
         ICompletableFuture<Map<String, Long>> future = job
                 .mapper(new Query2Mapper())
                 .reducer(new Query2CountReducerFactory())
@@ -146,8 +149,8 @@ public class Client {
         logger.info("RESULTS: "+result.toString());
     }
 
-    private static IMap<String, Long> getQuery2Map(HazelcastInstance client, String fileName, String provinceName) {
-        IMap<String, Long> provinceDepartments = client.getMap(provinceName.concat("Departments"));
+    private static IMap<String, Collection<Long>> getQuery2Map(HazelcastInstance client, String fileName, String provinceName) {
+        IMap<String, Collection<Long>> provinceDepartments = client.getMap(provinceName.concat("Departments3"));
 
         BufferedReader br;
         String line = "";
@@ -160,7 +163,11 @@ public class Client {
             while ((line = br.readLine()) != null) {
                 String[] csvLine = line.split(cvsSplitBy);
                 if (csvLine[3].equals(provinceName)) {
-                    provinceDepartments.put(csvLine[2], new Long(csvLine[1]));
+                    if (!provinceDepartments.containsKey(csvLine[2]))
+                        provinceDepartments.put(csvLine[2], new ArrayList<>());
+                    Collection<Long> aux = provinceDepartments.get(csvLine[2]);
+                    aux.add(new Long(csvLine[1]));
+                    provinceDepartments.put(csvLine[2], aux);
                 }
             }
         } catch (FileNotFoundException e) {
