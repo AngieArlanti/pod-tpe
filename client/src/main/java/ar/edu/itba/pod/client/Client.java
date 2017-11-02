@@ -13,6 +13,8 @@ import ar.edu.itba.pod.query1.ProvinceRegionReducerFactory;
 //import ar.edu.itba.pod.query4.HogarCountReducerFactory;
 
 
+import ar.edu.itba.pod.query2.Query2CountCollator;
+
 import ar.edu.itba.pod.query2.Query2CountReducerFactory;
 import ar.edu.itba.pod.query2.Query2Mapper;
 
@@ -26,10 +28,8 @@ import com.hazelcast.mapreduce.KeyValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
@@ -127,14 +127,14 @@ public class Client {
     private static void query2(HazelcastInstance hz) {
         JobTracker jobTracker = hz.getJobTracker("departmentCount");
 
-        IMap<String,Collection<Long>> map = getQuery2Map(hz, "census100.csv", "Corrientes");
+        IMap<String,Collection<Long>> map = getQuery2Map(hz, "census100.csv", "Buenos Aires");
 
         final KeyValueSource<String, Collection<Long>> source = KeyValueSource.fromMap(map);
         Job<String, Collection<Long>> job = jobTracker.newJob(source);
         ICompletableFuture<Map<String, Long>> future = job
                 .mapper(new Query2Mapper())
                 .reducer(new Query2CountReducerFactory())
-                .submit();
+                .submit(new Query2CountCollator(2, hz));
 
         Map<String, Long> result = null;
         // TODO --> Check what to do with these exceptions
@@ -156,7 +156,8 @@ public class Client {
         String line = "";
         String cvsSplitBy = ",";
         // FIXME check this --> How does the resources folder work
-        String csvFile = "/home/sebastian/Desktop/ITBA/POD/TPS/TPF/pod-tpe/client/src/main/resources/census/" + fileName;
+        ClassLoader classLoader = Client.class.getClassLoader();
+        String csvFile = classLoader.getResource("census/"+fileName).getPath();
 
         try {
             br = new BufferedReader(new FileReader(csvFile));
