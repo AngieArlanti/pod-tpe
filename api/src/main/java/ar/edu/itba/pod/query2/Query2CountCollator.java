@@ -5,6 +5,7 @@ import com.hazelcast.core.IMap;
 import com.hazelcast.mapreduce.Collator;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by sebastian on 11/2/17.
@@ -13,23 +14,20 @@ import java.util.*;
 public class Query2CountCollator implements Collator<Map.Entry<String, Long>, Map<String, Long>> {
 
     private int n;
-    private HazelcastInstance hz;
-    public Query2CountCollator(int n, HazelcastInstance hz) {
+    public Query2CountCollator(int n) {
         this.n = n;
-        this.hz = hz;
     }
 
     @Override
     public Map<String, Long> collate( Iterable<Map.Entry<String, Long>> values ) {
-        List<Map.Entry<String, Long>> list = new LinkedList<>((Collection<? extends Map.Entry<String, Long>>) values);
-        list.sort((Map.Entry<String, Long> o1, Map.Entry<String, Long> o2)->o2.getValue().compareTo(o1.getValue()));
 
-        int i = 0;
+        List<Map.Entry<String, Long>> list = new LinkedList<>((Collection<? extends Map.Entry<String, Long>>) values);
+
+        //if (n < list.size())
+        //    list = list.subList(0,n);
         Map<String, Long> aa = new HashMap<>();
         for (Map.Entry<String, Long> a :
                 list) {
-            if(i++ >= n)
-                break;
             aa.put(a.getKey(), a.getValue());
 
         }

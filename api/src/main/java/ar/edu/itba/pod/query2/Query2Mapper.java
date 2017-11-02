@@ -10,10 +10,10 @@ import java.util.StringTokenizer;
  */
 public class Query2Mapper implements com.hazelcast.mapreduce.Mapper<String, Collection<Long>, String, Long> {
 
+    // TODO make this more efficient
     @Override
     public void map(String s, Collection<Long> longs, Context<String, Long> context) {
-        for (Long l :
-                longs) {
+        for (Long l : longs) {
             context.emit(s, l);
         }
     }
