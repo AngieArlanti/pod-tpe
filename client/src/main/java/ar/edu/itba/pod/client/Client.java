@@ -15,11 +15,19 @@ import ar.edu.itba.pod.query1.ProvinceRegionReducerFactory;
 import ar.edu.itba.pod.query2.Query2CountCollator;
 
 
+import ar.edu.itba.pod.Cit;
+import ar.edu.itba.pod.Regions;
 import ar.edu.itba.pod.query2.Query2CountCollator;
 
 import ar.edu.itba.pod.query2.Query2CountReducerFactory;
 import ar.edu.itba.pod.query2.Query2Mapper;
+<<<<<<< b3b16c1218e5d8080174e657de6d8aaea319a6f2
 
+=======
+import ar.edu.itba.pod.query5.Query5Combiner;
+import ar.edu.itba.pod.query5.Query5Mapper;
+import ar.edu.itba.pod.query5.Query5ReducerFactory;
+>>>>>>> query 5
 import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.core.*;
@@ -44,6 +52,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+<<<<<<< b3b16c1218e5d8080174e657de6d8aaea319a6f2
 import java.net.URL;
 
 import java.util.ArrayList;
@@ -200,4 +209,60 @@ public class Client {
         }
         return provinceDepartments;
     }
+
+    /* *********************************************************** */
+    /* ************************* QUERY 5 ************************* */
+    /* *********************************************************** */
+
+    private static void query5(HazelcastInstance hz, String fileName) {
+        JobTracker jobTracker = hz.getJobTracker("regionAverage");
+
+        IList<Cit> list = getQuery5List(hz, fileName);
+
+        final KeyValueSource<String, Cit> source = KeyValueSource.fromList(list);
+        Job<String, Cit> job = jobTracker.newJob(source);
+        ICompletableFuture<Map<String, Float>> future = job
+                .mapper(new Query5Mapper())
+                .combiner(new Query5Combiner())
+                .reducer(new Query5ReducerFactory())
+                .submit();
+
+        Map<String, Float> result = null;
+        // TODO --> Check what to do with these exceptions
+        try {
+            result = future.get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+
+        logger.info("RESULTS: "+result.toString());
+    }
+
+    private static IList<Cit> getQuery5List(HazelcastInstance client, String fileName) {
+        IList<Cit> list = client.getList("regionAvg");
+        list.clear();
+
+        BufferedReader br;
+        String line = "";
+        String cvsSplitBy = ",";
+        // FIXME check this --> How does the resources folder work
+        ClassLoader classLoader = Client.class.getClassLoader();
+        String csvFile = classLoader.getResource("census/"+fileName).getPath();
+
+        try {
+            br = new BufferedReader(new FileReader(csvFile));
+            while ((line = br.readLine()) != null) {
+                String[] csvLine = line.split(cvsSplitBy);
+                list.add(new Cit(new Integer(csvLine[0]), new Long(csvLine[1]), csvLine[2], csvLine[3]));
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
 }

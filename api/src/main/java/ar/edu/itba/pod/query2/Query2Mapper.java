@@ -13,6 +13,6 @@ public class Query2Mapper implements com.hazelcast.mapreduce.Mapper<String, Long
     // TODO make this more efficient
     @Override
     public void map(String s, Long l, Context<String, Long> context) {
-        context.emit(s, l);
+        context.emit(s, 1L);
     }
 }
