@@ -13,6 +13,6 @@ public class Server {
 
         HazelcastInstance hz = Hazelcast.newHazelcastInstance();
 
-        logger.info("pod-map-reduce Server Starting ...");
+        logger.info("pod-map-reduce Server Tester Starting ...");
     }
 }
