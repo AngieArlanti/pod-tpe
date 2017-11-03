@@ -21,13 +21,10 @@ import ar.edu.itba.pod.query2.Query2CountCollator;
 
 import ar.edu.itba.pod.query2.Query2CountReducerFactory;
 import ar.edu.itba.pod.query2.Query2Mapper;
-<<<<<<< b3b16c1218e5d8080174e657de6d8aaea319a6f2
-
-=======
 import ar.edu.itba.pod.query5.Query5Combiner;
 import ar.edu.itba.pod.query5.Query5Mapper;
 import ar.edu.itba.pod.query5.Query5ReducerFactory;
->>>>>>> query 5
+
 import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.core.*;
@@ -52,7 +49,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-<<<<<<< b3b16c1218e5d8080174e657de6d8aaea319a6f2
 import java.net.URL;
 
 import java.util.ArrayList;
@@ -122,7 +118,8 @@ public class Client {
         logger.info("RESULTS: "+result.toString());
         */
 
-        query2(hz, "census100.2.csv", "Buenos Aires", 2);
+        //query2(hz, "census100.2.csv", "Buenos Aires", 2);
+        query5(hz, "census1000000.csv");
     }
 
     public static IMap<String,String> getBooksMap(HazelcastInstance client) {
