@@ -3,9 +3,6 @@ package ar.edu.itba.pod.query2;
 import ar.edu.itba.pod.model.Data;
 import com.hazelcast.mapreduce.Context;
 
-import java.util.Collection;
-import java.util.StringTokenizer;
-
 /**
  * Created by sebastian on 10/31/17.
  */

@@ -1,12 +1,7 @@
 package ar.edu.itba.pod.query2;
 
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.IMap;
 import com.hazelcast.mapreduce.Collator;
-
 import java.util.*;
-import java.util.stream.Collectors;
-
 
 /**
  * Created by sebastian on 11/2/17.

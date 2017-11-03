@@ -10,18 +10,18 @@ import java.util.List;
 
 public class DataReader {
     // FIXME I'd do everything on toLowerCase
-    final static List<String> regionNorte = Arrays.asList("tucumán", "catamarca","jujuy", "salta", "santiago del estero", "formosa", "chaco", "catamarca", "corrientes", "misiones");
+    final static List<String> regionNorte = Arrays.asList("tucumán", "catamarca", "jujuy", "salta", "santiago del estero", "formosa", "chaco", "catamarca", "corrientes", "misiones");
     final static List<String> regionCentro = Arrays.asList("córdoba", "santa fe", "entre ríos");
     final static List<String> regionCuyo = Arrays.asList("la rioja", "san juan", "san luis", "mendoza");
     final static List<String> regionBA = Arrays.asList("buenos aires", "ciudad autónoma de buenos aires");
     final static List<String> regionPatagonia = Arrays.asList("la pampa", "neuquén", "río negro", "chubut", "santa cruz", "tierra del fuego");
 
-    public static void readToList(final IList<Data> ilist, String inFile){
+    public static void readToList(final IList<Data> ilist, String inFile) {
 
-    //public static void readToList(final List<Data> ilist, String inFile){
+
         try {
             ClassLoader classLoader = Client.class.getClassLoader();
-            String csvFile = classLoader.getResource("census/"+inFile).getPath();
+            String csvFile = classLoader.getResource("census/" + inFile).getPath();
 
             BufferedReader br;
             String line = "";
@@ -53,12 +53,4 @@ public class DataReader {
         }
     }
 
-  /*  public static void main(String[] args){
-        List<Data> list = new ArrayList<Data>();
-        readToList(list,"/Users/agophurmuz/Downloads/census100.csv");
-
-        for (Data data : list){
-            System.out.println(data.toString());
-        }
-    }*/
 }
