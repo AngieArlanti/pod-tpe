@@ -34,7 +34,9 @@ public class Query5ReducerFactory implements ReducerFactory<String, Collection<L
         }
         @Override
         public Float finalizeReduce() {
-            return new Float(map.values().stream().mapToInt(Integer::intValue).sum())/map.size();
+            Float ans = new Float(map.values().stream().mapToInt(Integer::intValue).sum())/map.size();
+            ans = (float)((int)(ans * 100))/100;
+            return ans;
         }
     }
 }

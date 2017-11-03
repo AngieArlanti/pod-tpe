@@ -21,6 +21,7 @@ import ar.edu.itba.pod.query2.Query2CountCollator;
 
 import ar.edu.itba.pod.query2.Query2CountReducerFactory;
 import ar.edu.itba.pod.query2.Query2Mapper;
+import ar.edu.itba.pod.query5.Query5Collator;
 import ar.edu.itba.pod.query5.Query5Combiner;
 import ar.edu.itba.pod.query5.Query5Mapper;
 import ar.edu.itba.pod.query5.Query5ReducerFactory;
@@ -122,6 +123,10 @@ public class Client {
         query5(hz, "census1000000.csv");
     }
 
+    /* *********************************************************** */
+    /* ************************* TEST Qy ************************* */
+    /* *********************************************************** */
+
     public static IMap<String,String> getBooksMap(HazelcastInstance client) {
         IMap<String,String> booksMap = client.getMap("books");
 
@@ -214,15 +219,15 @@ public class Client {
     private static void query5(HazelcastInstance hz, String fileName) {
         JobTracker jobTracker = hz.getJobTracker("regionAverage");
 
-        IList<Cit> list = getQuery5List(hz, fileName);
+        IList<Data> list = getQuery5List(hz, fileName);
 
-        final KeyValueSource<String, Cit> source = KeyValueSource.fromList(list);
-        Job<String, Cit> job = jobTracker.newJob(source);
+        final KeyValueSource<String, Data> source = KeyValueSource.fromList(list);
+        Job<String, Data> job = jobTracker.newJob(source);
         ICompletableFuture<Map<String, Float>> future = job
                 .mapper(new Query5Mapper())
                 .combiner(new Query5Combiner())
                 .reducer(new Query5ReducerFactory())
-                .submit();
+                .submit(new Query5Collator());
 
         Map<String, Float> result = null;
         // TODO --> Check what to do with these exceptions
@@ -237,28 +242,10 @@ public class Client {
         logger.info("RESULTS: "+result.toString());
     }
 
-    private static IList<Cit> getQuery5List(HazelcastInstance client, String fileName) {
-        IList<Cit> list = client.getList("regionAvg");
+    private static IList<Data> getQuery5List(HazelcastInstance client, String fileName) {
+        IList<Data> list = client.getList("regionAvg");
         list.clear();
-
-        BufferedReader br;
-        String line = "";
-        String cvsSplitBy = ",";
-        // FIXME check this --> How does the resources folder work
-        ClassLoader classLoader = Client.class.getClassLoader();
-        String csvFile = classLoader.getResource("census/"+fileName).getPath();
-
-        try {
-            br = new BufferedReader(new FileReader(csvFile));
-            while ((line = br.readLine()) != null) {
-                String[] csvLine = line.split(cvsSplitBy);
-                list.add(new Cit(new Integer(csvLine[0]), new Long(csvLine[1]), csvLine[2], csvLine[3]));
-            }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        DataReader.readToList(list, fileName);
         return list;
     }
 
