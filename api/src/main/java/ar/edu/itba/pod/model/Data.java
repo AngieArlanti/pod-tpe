@@ -9,7 +9,7 @@ import java.io.IOException;
 public class Data implements DataSerializable{
 
     private ActivityCondition activityCondition;
-    private int homeId;
+    private Long homeId;
     private String departmentName;
     private String provinceName;
     private String region;
@@ -17,7 +17,7 @@ public class Data implements DataSerializable{
     public Data() {
     }
 
-    public Data(int activityConditionId, int homeId, String departmentName, String provinceName, String region){
+    public Data(int activityConditionId, Long homeId, String departmentName, String provinceName, String region){
         this.activityCondition = ActivityCondition.values()[activityConditionId];
         this.homeId = homeId;
         this.departmentName = departmentName;
@@ -29,38 +29,20 @@ public class Data implements DataSerializable{
         return region;
     }
 
-    public void setRegion(String region) {
-        this.region = region;
-    }
-
-    public int getHomeId() {
+    public Long getHomeId() {
         return homeId;
     }
 
-    public void setHomeId(int homeId) {
-        this.homeId = homeId;
-    }
-
-    public String getDepartmentName() {
-        return departmentName;
-    }
-
-    public void setDepartmentName(String departmentName) {
-        this.departmentName = departmentName;
-    }
+    public String getDepartmentName() { return departmentName; }
 
     public String getProvinceName() {
         return provinceName;
     }
 
-    public void setProvinceName(String provinceName) {
-        this.provinceName = provinceName;
-    }
-
     @Override
     public void writeData(ObjectDataOutput out) throws IOException {
         out.writeInt(activityCondition.ordinal());
-        out.writeInt(homeId);
+        out.writeLong(homeId);
         out.writeUTF(departmentName);
         out.writeUTF(provinceName);
         out.writeUTF(region);
@@ -69,7 +51,7 @@ public class Data implements DataSerializable{
     @Override
     public void readData(ObjectDataInput in) throws IOException {
         activityCondition = ActivityCondition.values()[in.readInt()];
-        homeId = in.readInt();
+        homeId = in.readLong();
         departmentName = in.readUTF();
         provinceName = in.readUTF();
         region = in.readUTF();

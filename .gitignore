@@ -12,6 +12,8 @@
 .classpath
 .project
 .settings/
-bin/
+bin/git
 *.iws
 *.ipr
+
+*.csv
