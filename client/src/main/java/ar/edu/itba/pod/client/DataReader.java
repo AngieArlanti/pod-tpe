@@ -10,20 +10,24 @@ import java.util.List;
 
 public class DataReader {
 
+    final static List<String> regionNorte = Arrays.asList("Jujuy", "Salta", "Santiago del estero", "Formosa", "Chaco", "Catamarca", "Corrientes", "Misiones");
+    final static List<String> regionCentro = Arrays.asList("Córdoba", "Santa Fe", "Entre Ríos");
+    final static List<String> regionCuyo = Arrays.asList("La Rioja", "San Juan", "San Luis", "Mendoza");
+    final static List<String> regionBA = Arrays.asList("Buenos Aires", "Ciudad Autónoma de Buenos Aires");
+    final static List<String> regionPatagonia = Arrays.asList("La Pampa", "Neuquén", "Río negro", "Chubut", "Santa Cruz", "Tierra del Fuego");
+
     public static void readToList(final IList<Data> ilist, String inFile){
 
     //public static void readToList(final List<Data> ilist, String inFile){
-
-        List<String> regionNorte = Arrays.asList("Jujuy", "Salta", "Santiago del estero", "Formosa", "Chaco", "Catamarca", "Corrientes", "Misiones");
-        List<String> regionCentro = Arrays.asList("Córdoba", "Santa Fe", "Entre Ríos");
-        List<String> regionCuyo = Arrays.asList("La Rioja", "San Juan", "San Luis", "Mendoza");
-        List<String> regionBA = Arrays.asList("Buenos Aires", "Ciudad Autónoma de Buenos Aires");
-        List<String> regionPatagonia = Arrays.asList("La Pampa", "Neuquén", "Río negro", "Chubut", "Santa Cruz", "Tierra del Fuego");
         try {
-            FileInputStream is = new FileInputStream(inFile);
-            LineNumberReader lineReader = new LineNumberReader(new InputStreamReader(is));
-            String line;
-            while((line = lineReader.readLine()) != null){
+            ClassLoader classLoader = Client.class.getClassLoader();
+            String csvFile = classLoader.getResource("census/"+inFile).getPath();
+
+            BufferedReader br;
+            String line = "";
+            br = new BufferedReader(new FileReader(csvFile));
+
+            while ((line = br.readLine()) != null) {
                 String[] token = line.split(",");
                 String region = "";
                 if (regionNorte.contains(token[3]))
@@ -34,8 +38,10 @@ public class DataReader {
                     region = "Región del Nuevo Cuyo";
                 else if (regionBA.contains(token[3]))
                     region = "Región Buenos Aires";
-                else
+                else if (regionPatagonia.contains(token[3]))
                     region = "Región Patagónica";
+                else
+                    region = "Región sin definir";
 
                 ilist.add(new Data(Integer.valueOf(token[0]), Integer.valueOf(token[1]), token[2], token[3], region));
             }

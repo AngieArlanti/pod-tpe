@@ -44,10 +44,10 @@ public class Client {
 
         final ClientConfig config = new ClientConfig();
         final HazelcastInstance hz = HazelcastClient.newHazelcastClient(config);
-        JobTracker jobTracker = hz.getJobTracker("word-count");
+
 
         /*  query example
-
+        JobTracker jobTracker = hz.getJobTracker("word-count");
         IMap<String,String> map = getBooksMap(hz);
         Source es un wrapper para IMap.
         final KeyValueSource<String, String> source = KeyValueSource.fromMap(map);
@@ -89,6 +89,8 @@ public class Client {
 
         logger.info("RESULTS: "+result.toString());
         */
+
+        query2(hz, "census100.2.csv", "Buenos Aires", 2);
     }
 
     public static IMap<String,String> getBooksMap(HazelcastInstance client) {
