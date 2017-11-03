@@ -12,15 +12,13 @@ import ar.edu.itba.pod.query1.ProvinceRegionReducerFactory;
 //import ar.edu.itba.pod.query4.HogarCountReducerFactory;
 
 
-import ar.edu.itba.pod.query2.Query2CountCollator;
+import ar.edu.itba.pod.query2.*;
 
 
 import ar.edu.itba.pod.Cit;
 import ar.edu.itba.pod.Regions;
 import ar.edu.itba.pod.query2.Query2CountCollator;
 
-import ar.edu.itba.pod.query2.Query2CountReducerFactory;
-import ar.edu.itba.pod.query2.Query2Mapper;
 import ar.edu.itba.pod.query5.Query5Collator;
 import ar.edu.itba.pod.query5.Query5Combiner;
 import ar.edu.itba.pod.query5.Query5Mapper;
@@ -119,8 +117,8 @@ public class Client {
         logger.info("RESULTS: "+result.toString());
         */
 
-        //query2(hz, "census100.2.csv", "Buenos Aires", 2);
-        query5(hz, "census1000000.csv");
+        query2(hz, "census100.2.csv", "Buenos Aires", 2);
+        //query5(hz, "census1000000.csv");
     }
 
     /* *********************************************************** */
@@ -161,10 +159,10 @@ public class Client {
     private static void query2(HazelcastInstance hz, String fileName, String provinceName, int n) {
         JobTracker jobTracker = hz.getJobTracker("departmentCount");
 
-        IMap<String,Long> map = getQuery2Map(hz, fileName, provinceName);
+        IList<Data> list = getQuery2List(hz, fileName, provinceName);
 
-        final KeyValueSource<String, Long> source = KeyValueSource.fromMap(map);
-        Job<String, Long> job = jobTracker.newJob(source);
+        final KeyValueSource<String, Data> source = KeyValueSource.fromList(list);
+        Job<String, Data> job = jobTracker.newJob(source);
         ICompletableFuture<Map<String, Long>> future = job
                 .mapper(new Query2Mapper())
                 .reducer(new Query2CountReducerFactory())
@@ -183,33 +181,16 @@ public class Client {
         logger.info("RESULTS: "+result.toString());
     }
 
-    private static IMap<String, Long> getQuery2Map(HazelcastInstance client, String fileName, String provinceName) {
-        IMap<String, Long> provinceDepartments = client.getMap(provinceName.concat("Departments"));
-        provinceDepartments.clear();
-
-        BufferedReader br;
-        String line = "";
-        String cvsSplitBy = ",";
-        // FIXME check this --> How does the resources folder work
-        ClassLoader classLoader = Client.class.getClassLoader();
-        String csvFile = classLoader.getResource("census/"+fileName).getPath();
-        try {
-            br = new BufferedReader(new FileReader(csvFile));
-            while ((line = br.readLine()) != null) {
-                String[] csvLine = line.split(cvsSplitBy);
-                if (csvLine[3].equals(provinceName)) {
-                    if (!provinceDepartments.containsKey(csvLine[2]))
-                        provinceDepartments.put(csvLine[2], new Long(0));
-                    Long aux = provinceDepartments.get(csvLine[2]) + 1;
-                    provinceDepartments.put(csvLine[2], aux);
-                }
-            }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+    private static IList<Data> getQuery2List(HazelcastInstance client, String fileName, String provinceName) {
+        IList<Data> list = client.getList("departments");
+        list.clear();
+        DataReader.readToList(list, fileName);
+        // FIXME - This could be replaced with a Predicate, but don't know how to do that (because is on the value, not the key)
+        for (Data d : list) {
+            if (!d.getProvinceName().toLowerCase().equals(provinceName.toLowerCase()))
+                list.remove(d);
         }
-        return provinceDepartments;
+        return list;
     }
 
     /* *********************************************************** */
