@@ -7,6 +7,7 @@ import com.hazelcast.mapreduce.Collator;
 import java.util.*;
 import java.util.stream.Collectors;
 
+
 /**
  * Created by sebastian on 11/2/17.
  */
@@ -26,8 +27,8 @@ public class Query2CountCollator implements Collator<Map.Entry<String, Long>, Ma
         list.sort((Map.Entry<String, Long> o1, Map.Entry<String, Long> o2)->o2.getValue().compareTo(o1.getValue()));
         if (n < list.size())
             list = list.subList(0,n);
-
         Map<String, Long> aa = new LinkedHashMap<>();
+
         for (Map.Entry<String, Long> a : list) {
             aa.put(a.getKey(), a.getValue());
         }

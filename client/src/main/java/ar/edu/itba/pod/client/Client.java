@@ -1,6 +1,5 @@
 package ar.edu.itba.pod.client;
 
-
 import ar.edu.itba.pod.example.TokenizerMapper;
 import ar.edu.itba.pod.example.WordCountReducerFactory;
 
@@ -15,12 +14,34 @@ import ar.edu.itba.pod.query1.ProvinceRegionReducerFactory;
 
 import ar.edu.itba.pod.query2.Query2CountCollator;
 
+
+import ar.edu.itba.pod.Cit;
+import ar.edu.itba.pod.Regions;
+import ar.edu.itba.pod.query2.Query2CountCollator;
+
 import ar.edu.itba.pod.query2.Query2CountReducerFactory;
 import ar.edu.itba.pod.query2.Query2Mapper;
+import ar.edu.itba.pod.query5.Query5Collator;
+import ar.edu.itba.pod.query5.Query5Combiner;
+import ar.edu.itba.pod.query5.Query5Mapper;
+import ar.edu.itba.pod.query5.Query5ReducerFactory;
 
 import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.core.*;
+
+import ar.edu.itba.pod.query2.Query2CountReducerFactory;
+import ar.edu.itba.pod.query2.Query2Mapper;
+import com.hazelcast.client.HazelcastClient;
+import com.hazelcast.client.config.ClientConfig;
+
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.ICompletableFuture;
+import com.hazelcast.core.IList;
+import com.hazelcast.core.IMap;
+
+import com.hazelcast.core.*;
+
 import com.hazelcast.mapreduce.Job;
 import com.hazelcast.mapreduce.JobTracker;
 import com.hazelcast.mapreduce.KeyValueSource;
@@ -30,8 +51,17 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.URL;
+
 import java.util.ArrayList;
 import java.util.Collection;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+
+import java.util.ArrayList;
+import java.util.Collection;
+
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
@@ -44,7 +74,6 @@ public class Client {
 
         final ClientConfig config = new ClientConfig();
         final HazelcastInstance hz = HazelcastClient.newHazelcastClient(config);
-
 
         /*  query example
         JobTracker jobTracker = hz.getJobTracker("word-count");
@@ -90,8 +119,13 @@ public class Client {
         logger.info("RESULTS: "+result.toString());
         */
 
-        query2(hz, "census100.2.csv", "Buenos Aires", 2);
+        //query2(hz, "census100.2.csv", "Buenos Aires", 2);
+        query5(hz, "census1000000.csv");
     }
+
+    /* *********************************************************** */
+    /* ************************* TEST Qy ************************* */
+    /* *********************************************************** */
 
     public static IMap<String,String> getBooksMap(HazelcastInstance client) {
         IMap<String,String> booksMap = client.getMap("books");
@@ -118,9 +152,6 @@ public class Client {
 
         Map<String, Long> result = future.get();
         logger.info("RESULTS: "+result.toString());
-
-        query2(hz, "census100.csv", "Buenos Aires", 5);
-
     }
 
     /* *********************************************************** */
@@ -162,7 +193,6 @@ public class Client {
         // FIXME check this --> How does the resources folder work
         ClassLoader classLoader = Client.class.getClassLoader();
         String csvFile = classLoader.getResource("census/"+fileName).getPath();
-
         try {
             br = new BufferedReader(new FileReader(csvFile));
             while ((line = br.readLine()) != null) {
@@ -182,5 +212,41 @@ public class Client {
         return provinceDepartments;
     }
 
+    /* *********************************************************** */
+    /* ************************* QUERY 5 ************************* */
+    /* *********************************************************** */
+
+    private static void query5(HazelcastInstance hz, String fileName) {
+        JobTracker jobTracker = hz.getJobTracker("regionAverage");
+
+        IList<Data> list = getQuery5List(hz, fileName);
+
+        final KeyValueSource<String, Data> source = KeyValueSource.fromList(list);
+        Job<String, Data> job = jobTracker.newJob(source);
+        ICompletableFuture<Map<String, Float>> future = job
+                .mapper(new Query5Mapper())
+                .combiner(new Query5Combiner())
+                .reducer(new Query5ReducerFactory())
+                .submit(new Query5Collator());
+
+        Map<String, Float> result = null;
+        // TODO --> Check what to do with these exceptions
+        try {
+            result = future.get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+
+        logger.info("RESULTS: "+result.toString());
+    }
+
+    private static IList<Data> getQuery5List(HazelcastInstance client, String fileName) {
+        IList<Data> list = client.getList("regionAvg");
+        list.clear();
+        DataReader.readToList(list, fileName);
+        return list;
+    }
 
 }
