@@ -2,12 +2,16 @@ package ar.edu.itba.pod.client;
 
 import ar.edu.itba.pod.example.WordCountReducerFactory;
 import ar.edu.itba.pod.model.Data;
+import ar.edu.itba.pod.model.DepartmentNameOcurrenciesCount;
 import ar.edu.itba.pod.query1.ProvinceRegionCollator;
 import ar.edu.itba.pod.query1.ProvinceRegionMapper;
 import ar.edu.itba.pod.query1.ProvinceRegionReducerFactory;
-import ar.edu.itba.pod.query4.HogarCountCollator;
+/*import ar.edu.itba.pod.query4.HogarCountCollator;
 import ar.edu.itba.pod.query4.HogarCountMapper;
-import ar.edu.itba.pod.query4.HogarCountReducerFactory;
+import ar.edu.itba.pod.query4.HogarCountReducerFactory;*/
+import ar.edu.itba.pod.query6.DepartmentCollator;
+import ar.edu.itba.pod.query6.DepartmentMapper;
+import ar.edu.itba.pod.query6.DepartmentReducerFactory;
 import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.core.HazelcastInstance;
@@ -63,7 +67,7 @@ public class Client {
          */
 
          // query 4
-        final IList<Data> list = hz.getList( "my-list" );
+        /*final IList<Data> list = hz.getList( "my-list" );
         list.clear();
         DataReader.readToList(list, "/Users/agophurmuz/Downloads/census100.csv");
         final KeyValueSource<String, Data> source = KeyValueSource.fromList( list );
@@ -76,8 +80,35 @@ public class Client {
 
         Map<String, Integer> result = future.get();
 
-        logger.info("RESULTS: "+result.toString());
+        logger.info("RESULTS: "+result.toString());*/
 
+
+         //  query 6
+        
+        final IList<Data> list = hz.getList( "my-list" );
+        list.clear();
+        DataReader.readToList(list, "/Users/mminestrelli/Downloads/census100.csv");
+        final KeyValueSource<String, Data> source = KeyValueSource.fromList( list );
+
+
+        Job<String, Data> job = jobTracker.newJob(source);
+        ICompletableFuture<Map<String, DepartmentNameOcurrenciesCount>> future = job
+                .mapper(new DepartmentMapper())
+                .reducer(new DepartmentReducerFactory())
+                .submit(new DepartmentCollator(1)); // adentro del submit recibe un collator para ordenar
+
+        Map<String, DepartmentNameOcurrenciesCount> result = future.get();
+
+        logQuery6(result);
+        //logger.info(result.toString());
+
+
+    }
+
+    private static void logQuery6(Map<String, DepartmentNameOcurrenciesCount> result) {
+        for (DepartmentNameOcurrenciesCount department: result.values()) {
+            logger.info(department.toString());
+        }
     }
 
     public static IMap<String,String> getBooksMap(HazelcastInstance client) {
