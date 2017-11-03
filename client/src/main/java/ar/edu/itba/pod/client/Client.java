@@ -1,11 +1,18 @@
 package ar.edu.itba.pod.client;
 
-import ar.edu.itba.pod.example.TokenizerMapper;
 import ar.edu.itba.pod.example.WordCountReducerFactory;
+import ar.edu.itba.pod.model.Data;
+import ar.edu.itba.pod.query1.ProvinceRegionCollator;
+import ar.edu.itba.pod.query1.ProvinceRegionMapper;
+import ar.edu.itba.pod.query1.ProvinceRegionReducerFactory;
+import ar.edu.itba.pod.query4.HogarCountCollator;
+import ar.edu.itba.pod.query4.HogarCountMapper;
+import ar.edu.itba.pod.query4.HogarCountReducerFactory;
 import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ICompletableFuture;
+import com.hazelcast.core.IList;
 import com.hazelcast.core.IMap;
 import com.hazelcast.mapreduce.Job;
 import com.hazelcast.mapreduce.JobTracker;
@@ -28,17 +35,46 @@ public class Client {
 
         JobTracker jobTracker = hz.getJobTracker("word-count");
 
+        /*  query example
+
         IMap<String,String> map = getBooksMap(hz);
-        //Source es un wrapper para IMap.
+        Source es un wrapper para IMap.
         final KeyValueSource<String, String> source = KeyValueSource.fromMap(map);
+
 
         Job<String, String> job = jobTracker.newJob(source);
         ICompletableFuture<Map<String, Long>> future = job
                 .mapper(new TokenizerMapper())
                 .reducer(new WordCountReducerFactory())
                 .submit();
+                */
 
-        Map<String, Long> result = future.get();
+        /* //query 1
+
+        final IList<Data> list = hz.getList( "my-list" );
+        DataReader.readToList(list, "/Users/agophurmuz/Downloads/census100.csv");
+        final KeyValueSource<String, Data> source = KeyValueSource.fromList( list );
+
+        Job<String, Data> job = jobTracker.newJob(source);
+        ICompletableFuture<Map<String, Integer>> future = job
+                .mapper(new ProvinceRegionMapper())
+                .reducer(new ProvinceRegionReducerFactory())
+                .submit(new ProvinceRegionCollator()); // adentro del submit recibe un collator para ordenar
+         */
+
+         // query 4
+        final IList<Data> list = hz.getList( "my-list" );
+        list.clear();
+        DataReader.readToList(list, "/Users/agophurmuz/Downloads/census100.csv");
+        final KeyValueSource<String, Data> source = KeyValueSource.fromList( list );
+
+        Job<String, Data> job = jobTracker.newJob(source);
+        ICompletableFuture<Map<String, Integer>> future = job
+                .mapper(new HogarCountMapper())
+                .reducer(new HogarCountReducerFactory())
+                .submit(new HogarCountCollator()); // adentro del submit recibe un collator para ordenar
+
+        Map<String, Integer> result = future.get();
 
         logger.info("RESULTS: "+result.toString());
 
