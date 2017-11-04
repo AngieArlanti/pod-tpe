@@ -84,17 +84,18 @@ public class Client {
 
 
 
-        query2(hz, "census100.csv", "Buenos Aires", 2);
+        //query2(hz, "census100.csv", "Buenos Aires", 2);
         //query5(hz, "census1000000.csv");
-        //query6(hz, "census100.csv", 2);
+        query6(hz, "census100.csv", 2);
 
     }
 
     private static void logQuery6(Map<String, DepartmentNameOcurrenciesCount> result) {
+        /* Print by lines
         for (DepartmentNameOcurrenciesCount department : result.values()) {
             logger.info(department.toString());
         }
-
+        */
         logger.info("RESULTS: " + result.toString());
     }
 
@@ -199,19 +200,26 @@ public class Client {
 
         logger.info("RESULTS: "+result.toString());
     }
+    private static IList<Data> getQuery5List(HazelcastInstance client, String fileName) {
+        IList<Data> list = client.getList("regionAvg");
+        list.clear();
+        DataReader.readToList(list, fileName);
+        return list;
+    }
 
     /* *********************************************************** */
     /* ************************* QUERY 6 ************************* */
     /* *********************************************************** */
 
     private static void query6(HazelcastInstance hz, String fileName, int n) {
-        final IList<Data> list = hz.getList( "my-list" );
-        list.clear();
-        DataReader.readToList(list, "/Users/mminestrelli/Downloads/census100.csv");
+
+        JobTracker jobTracker = hz.getJobTracker("departmentInProvince");
+
+        IList<Data> list = getQuery6List(hz, fileName);
         final KeyValueSource<String, Data> source = KeyValueSource.fromList( list );
 
 
-        Job<String, Data> job = hz.getJobTracker("departmentInProvince").newJob(source);
+        Job<String, Data> job = jobTracker.newJob(source);
         ICompletableFuture<Map<String, DepartmentNameOcurrenciesCount>> future = job
                 .mapper(new DepartmentMapper())
                 .reducer(new DepartmentReducerFactory())
@@ -227,11 +235,13 @@ public class Client {
         }
     }
 
-    private static IList<Data> getQuery5List(HazelcastInstance client, String fileName) {
-        IList<Data> list = client.getList("regionAvg");
+    private static IList<Data> getQuery6List(HazelcastInstance client, String fileName) {
+        IList<Data> list = client.getList("departmentInProvince");
         list.clear();
         DataReader.readToList(list, fileName);
         return list;
     }
+
+
 
 }
