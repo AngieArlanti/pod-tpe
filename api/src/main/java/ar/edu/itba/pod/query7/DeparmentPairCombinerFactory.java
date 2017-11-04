@@ -1,20 +1,20 @@
 package ar.edu.itba.pod.query7;
 
-import ar.edu.itba.pod.model.DepartmentProvincePair;
+import ar.edu.itba.pod.model.ProvincePairDepartments;
 import com.hazelcast.mapreduce.Combiner;
 import com.hazelcast.mapreduce.CombinerFactory;
 
 import java.util.*;
 
-public class DeparmentPairCombinerFactory implements CombinerFactory<String, String, DepartmentProvincePair> {
+public class DeparmentPairCombinerFactory implements CombinerFactory<String, String, ProvincePairDepartments> {
 
     //String keyIn: nombre departamento
     @Override
-    public Combiner<String, DepartmentProvincePair> newCombiner(String key) {
+    public Combiner<String, ProvincePairDepartments> newCombiner(String key) {
         return new DepartmentPairCombiner(key);
     }
 
-    private class DepartmentPairCombiner extends Combiner<String, DepartmentProvincePair> {
+    private class DepartmentPairCombiner extends Combiner<String, ProvincePairDepartments> {
 
         private Set<String> provinceNames;
         private String departamentName;
@@ -37,9 +37,8 @@ public class DeparmentPairCombinerFactory implements CombinerFactory<String, Str
 
         // Set: ["departamento": lista de provincias"]
         @Override
-        public DepartmentProvincePair finalizeChunk() {
-            DepartmentProvincePair departmentProvincePair = new DepartmentProvincePair();
-            departmentProvincePair.setDepartmentName(departamentName);
+        public ProvincePairDepartments finalizeChunk() {
+            ProvincePairDepartments provincePairDepartments = new ProvincePairDepartments();
 
             List<String> provinces = new ArrayList<>();
             provinces.addAll(provinceNames);
@@ -54,10 +53,10 @@ public class DeparmentPairCombinerFactory implements CombinerFactory<String, Str
                     } else if (provinceOne.compareTo(provinceTwo) > 0) {
                         pair = new StringBuilder().append(provinceTwo).append(" + ").append(provinceOne).toString();
                     }
-                    departmentProvincePair.addPair(pair);
+                    provincePairDepartments.addPair(pair);
                 }
             }
-            return departmentProvincePair;
+            return provincePairDepartments;
         }
 
         @Override

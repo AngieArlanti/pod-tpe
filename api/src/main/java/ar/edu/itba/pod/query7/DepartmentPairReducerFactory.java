@@ -1,31 +1,44 @@
 package ar.edu.itba.pod.query7;
 
-import ar.edu.itba.pod.model.DepartmentPairOcurrenciesCount;
-import ar.edu.itba.pod.model.DepartmentProvincePair;
+import ar.edu.itba.pod.model.ProvincePairDepartments;
 import com.hazelcast.mapreduce.Reducer;
 import com.hazelcast.mapreduce.ReducerFactory;
 
-public class DepartmentPairReducerFactory implements ReducerFactory<String,DepartmentProvincePair,DepartmentPairOcurrenciesCount> {
+import java.util.HashMap;
+import java.util.Map;
+
+public class DepartmentPairReducerFactory implements ReducerFactory<String,ProvincePairDepartments,Map<String,String>
+
+        > {
     @Override
-    public Reducer<DepartmentProvincePair, DepartmentPairOcurrenciesCount> newReducer(String departmentName) {
-        return null;
+    public Reducer<ProvincePairDepartments, Map<String,String>> newReducer(String departmentName) {
+        return new DepartmentPairReducer(departmentName);
     }
 
-    private class DepartmentPairReducer extends Reducer<DepartmentProvincePair,DepartmentPairOcurrenciesCount>{
+    private class DepartmentPairReducer extends Reducer<ProvincePairDepartments,Map<String,String>>{
+        Map<String,String> provincePairDepartmentMap;
+        String dept;
+
+        public DepartmentPairReducer(String dept) {
+            this.dept = dept;
+        }
 
         @Override
         public void beginReduce() {
             super.beginReduce();
+            provincePairDepartmentMap = new HashMap<>();
         }
 
         @Override
-        public void reduce(DepartmentProvincePair departmentProvincePair) {
-
+        public void reduce(ProvincePairDepartments provincePairDepartments) {
+            for(String pair: provincePairDepartments.getProvincePairSet()){
+                provincePairDepartmentMap.put(pair,dept);
+            }
         }
 
         @Override
-        public DepartmentPairOcurrenciesCount finalizeReduce() {
-            return null;
+        public Map<String,String> finalizeReduce() {
+            return provincePairDepartmentMap;
         }
     }
 }
