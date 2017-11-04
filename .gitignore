@@ -15,5 +15,5 @@
 bin/git
 *.iws
 *.ipr
-
+*/out/artifacts/*
 *.csv
