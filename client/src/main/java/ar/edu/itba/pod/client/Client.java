@@ -43,8 +43,20 @@ public class Client {
     public static void main(String[] args) throws ExecutionException, InterruptedException {
         logger.info("pod-map-reduce Client Starting ...");
 
-        final ClientConfig config = new ClientConfig();
-        final HazelcastInstance hz = HazelcastClient.newHazelcastClient(config);
+        String name = System.getProperty("name");
+        if(name == null){
+            name = "53373";
+        }
+        String pass = System.getProperty("pass");
+        if (pass == null) {
+            pass = "cluster-pass";
+        }
+        logger.info(String.format("Connecting with cluster dev-name [%s]", name));
+
+        ClientConfig ccfg = new ClientConfig();
+        ccfg.getGroupConfig().setName(name).setPassword(pass);
+
+        HazelcastInstance hz = HazelcastClient.newHazelcastClient(ccfg);
 
         /* //query 1
 
@@ -76,7 +88,7 @@ public class Client {
         logger.info("RESULTS: "+result.toString());
         */
 
-        query2(hz, "census100.csv", "Buenos Aires", 2);
+        query2(hz, "census/census100.csv", "Buenos Aires", 2);
         //query5(hz, "census1000000.csv");
     }
 
