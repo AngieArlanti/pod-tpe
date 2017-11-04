@@ -6,12 +6,10 @@ import ar.edu.itba.pod.example.WordCountReducerFactory;
 import ar.edu.itba.pod.model.Data;
 
 import ar.edu.itba.pod.model.DepartmentNameOcurrenciesCount;
-import ar.edu.itba.pod.query1.ProvinceRegionCollator;
-import ar.edu.itba.pod.query1.ProvinceRegionMapper;
-import ar.edu.itba.pod.query1.ProvinceRegionReducerFactory;
 /*import ar.edu.itba.pod.query4.HogarCountCollator;
 import ar.edu.itba.pod.query4.HogarCountMapper;
 import ar.edu.itba.pod.query4.HogarCountReducerFactory;*/
+import ar.edu.itba.pod.model.DepartmentPairOcurrenciesCount;
 import ar.edu.itba.pod.query6.DepartmentCollator;
 import ar.edu.itba.pod.query6.DepartmentMapper;
 import ar.edu.itba.pod.query6.DepartmentReducerFactory;
@@ -20,6 +18,10 @@ import ar.edu.itba.pod.query5.Query5Collator;
 import ar.edu.itba.pod.query5.Query5Combiner;
 import ar.edu.itba.pod.query5.Query5Mapper;
 import ar.edu.itba.pod.query5.Query5ReducerFactory;
+import ar.edu.itba.pod.query7.DeparmentPairCombinerFactory;
+import ar.edu.itba.pod.query7.DepartmentInProvinceMapper;
+import ar.edu.itba.pod.query7.DepartmentPairCollator;
+import ar.edu.itba.pod.query7.DepartmentPairReducerFactory;
 import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.client.config.ClientConfig;
 
@@ -86,7 +88,7 @@ public class Client {
 
         //query2(hz, "census100.csv", "Buenos Aires", 2);
         //query5(hz, "census1000000.csv");
-        query6(hz, "census100.csv", 2);
+        query7(hz, "census100.csv", 2);
 
     }
 
@@ -242,6 +244,41 @@ public class Client {
         return list;
     }
 
+    /* *********************************************************** */
+    /* ************************* QUERY 7 ************************* */
+    /* *********************************************************** */
+
+    private static void query7(HazelcastInstance hz, String fileName, int n) {
+
+        JobTracker jobTracker = hz.getJobTracker("provincePairInDepartment");
+
+        IList<Data> list = getQuery7List(hz, fileName);
+        final KeyValueSource<String, Data> source = KeyValueSource.fromList( list );
 
 
+        Job<String, Data> job = jobTracker.newJob(source);
+        ICompletableFuture<Map<String, DepartmentPairOcurrenciesCount>> future = job
+                .mapper(new DepartmentInProvinceMapper())
+                .combiner(new DeparmentPairCombinerFactory())
+                .reducer(new DepartmentPairReducerFactory())
+                .submit(new DepartmentPairCollator(1)); // adentro del submit recibe un collator para ordenar
+
+        try {
+            Map<String, DepartmentPairOcurrenciesCount> result = future.get();
+            for (DepartmentPairOcurrenciesCount department : result.values()) {
+                logger.info(department.toString());
+            }
+        } catch (InterruptedException e1) {
+
+        } catch (ExecutionException e) {
+
+        }
+    }
+
+    private static IList<Data> getQuery7List(HazelcastInstance client, String fileName) {
+        IList<Data> list = client.getList("provincePairInDepartment");
+        list.clear();
+        DataReader.readToList(list, fileName);
+        return list;
+    }
 }
