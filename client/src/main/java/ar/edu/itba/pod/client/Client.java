@@ -4,17 +4,22 @@ import ar.edu.itba.pod.example.TokenizerMapper;
 import ar.edu.itba.pod.example.WordCountReducerFactory;
 
 import ar.edu.itba.pod.model.Data;
-//import ar.edu.itba.pod.query4.HogarCountCollator;
-//import ar.edu.itba.pod.query4.HogarCountMapper;
-//import ar.edu.itba.pod.query4.HogarCountReducerFactory;
 
+import ar.edu.itba.pod.model.DepartmentNameOcurrenciesCount;
+import ar.edu.itba.pod.query1.ProvinceRegionCollator;
+import ar.edu.itba.pod.query1.ProvinceRegionMapper;
+import ar.edu.itba.pod.query1.ProvinceRegionReducerFactory;
+/*import ar.edu.itba.pod.query4.HogarCountCollator;
+import ar.edu.itba.pod.query4.HogarCountMapper;
+import ar.edu.itba.pod.query4.HogarCountReducerFactory;*/
+import ar.edu.itba.pod.query6.DepartmentCollator;
+import ar.edu.itba.pod.query6.DepartmentMapper;
+import ar.edu.itba.pod.query6.DepartmentReducerFactory;
 import ar.edu.itba.pod.query2.Query2CountCollator;
-
 import ar.edu.itba.pod.query5.Query5Collator;
 import ar.edu.itba.pod.query5.Query5Combiner;
 import ar.edu.itba.pod.query5.Query5Mapper;
 import ar.edu.itba.pod.query5.Query5ReducerFactory;
-
 import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.client.config.ClientConfig;
 
@@ -59,8 +64,10 @@ public class Client {
                 .submit(new ProvinceRegionCollator()); // adentro del submit recibe un collator para ordenar
          */
 
+
         /*/ query 4
         final IList<Data> list = hz.getList( "my-list" );
+
         list.clear();
         DataReader.readToList(list, "/Users/agophurmuz/Downloads/census100.csv");
         final KeyValueSource<String, Data> source = KeyValueSource.fromList( list );
@@ -73,11 +80,23 @@ public class Client {
 
         Map<String, Integer> result = future.get();
 
-        logger.info("RESULTS: "+result.toString());
-        */
+        logger.info("RESULTS: "+result.toString());*/
 
-        query2(hz, "census100.csv", "Buenos Aires", 2);
+
+
+        //query2(hz, "census100.csv", "Buenos Aires", 2);
         //query5(hz, "census1000000.csv");
+        query6(hz, "census100.csv", 2);
+
+    }
+
+    private static void logQuery6(Map<String, DepartmentNameOcurrenciesCount> result) {
+        /* Print by lines
+        for (DepartmentNameOcurrenciesCount department : result.values()) {
+            logger.info(department.toString());
+        }
+        */
+        logger.info("RESULTS: " + result.toString());
     }
 
     /* *********************************************************** */
@@ -181,12 +200,48 @@ public class Client {
 
         logger.info("RESULTS: "+result.toString());
     }
-
     private static IList<Data> getQuery5List(HazelcastInstance client, String fileName) {
         IList<Data> list = client.getList("regionAvg");
         list.clear();
         DataReader.readToList(list, fileName);
         return list;
     }
+
+    /* *********************************************************** */
+    /* ************************* QUERY 6 ************************* */
+    /* *********************************************************** */
+
+    private static void query6(HazelcastInstance hz, String fileName, int n) {
+
+        JobTracker jobTracker = hz.getJobTracker("departmentInProvince");
+
+        IList<Data> list = getQuery6List(hz, fileName);
+        final KeyValueSource<String, Data> source = KeyValueSource.fromList( list );
+
+
+        Job<String, Data> job = jobTracker.newJob(source);
+        ICompletableFuture<Map<String, DepartmentNameOcurrenciesCount>> future = job
+                .mapper(new DepartmentMapper())
+                .reducer(new DepartmentReducerFactory())
+                .submit(new DepartmentCollator(n)); // adentro del submit recibe un collator para ordenar
+
+        try {
+            Map<String, DepartmentNameOcurrenciesCount> result = future.get();
+            logQuery6(result);
+        } catch (InterruptedException e1) {
+
+        } catch (ExecutionException e) {
+
+        }
+    }
+
+    private static IList<Data> getQuery6List(HazelcastInstance client, String fileName) {
+        IList<Data> list = client.getList("departmentInProvince");
+        list.clear();
+        DataReader.readToList(list, fileName);
+        return list;
+    }
+
+
 
 }
