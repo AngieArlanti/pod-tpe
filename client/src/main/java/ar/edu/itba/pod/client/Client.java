@@ -50,6 +50,7 @@ import java.util.concurrent.ExecutionException;
 public class Client {
     private static Logger logger = LoggerFactory.getLogger(Client.class);
     private static IMap<String, String> booksMap;
+    private static long startTime;
 
     public static void main(String[] args) throws ExecutionException, InterruptedException {
         logger.info("pod-map-reduce Client Starting ...");
@@ -57,14 +58,14 @@ public class Client {
         final ClientConfig config = new ClientConfig();
         final HazelcastInstance hz = HazelcastClient.newHazelcastClient(config);
 
-        query1(hz, "census100.csv");
-        query2(hz, "census100.csv", "Buenos Aires", 2);
-        query3(hz, "census100.csv");
-        query4(hz, "census100.csv");
-        query5(hz, "census100.csv");
-        query6(hz, "census100.csv", 2);
-        query7(hz, "census100.csv", 2);
-        query7v2(hz, "census100.csv", 1);
+        //query1(hz, "census1000000.csv");
+        query2(hz, "census1000000.csv", "Santa Fe", 5);
+        query3(hz, "census1000000.csv");
+        query4(hz, "census1000000.csv");
+        query5(hz, "census1000000.csv");
+        query6(hz, "census1000000.csv", 2);
+        query7(hz, "census1000000.csv", 2);
+        query7v2(hz, "census1000000.csv", 1);
 
     }
 
@@ -77,20 +78,34 @@ public class Client {
         logger.info("RESULTS: " + result.toString());
     }
 
+    public static Logger getLogger() {return logger;}
+
+    private static void startExecutionTime() {
+        startTime = System.nanoTime();
+        logger.info("Starting query");
+    }
+    private static void logExecutionTime(String queryName) {
+        long endTime = System.nanoTime();
+        long duration = (endTime - startTime);
+        logger.info(queryName + " execution time: " + duration/1000000 + " ms");
+    }
+    private static void endQuery(String infoLog, ICompletableFuture future, Map result) {
+        try {
+            result = (Map) future.get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } finally {
+            logExecutionTime(infoLog);
+            logger.info("RESULTS: "+result.toString());
+        }
+    }
+
     /* *********************************************************** */
     /* ************************* TEST Qy ************************* */
     /* *********************************************************** */
 
-    public static IMap<String,String> getBooksMap(HazelcastInstance client) {
-        IMap<String,String> booksMap = client.getMap("books");
-
-        booksMap.put("Dracula","  3 May. Bistriz.- Left Munich at 8:35 P.M., on 1st May, arriving at");
-        booksMap.put("Dracula","Vienna early next morning; should have arrived at 6:46, but train");
-        booksMap.put("MobyDick", "This text of Melville's Moby-Dick is based on the Hendricks House edition.");
-        booksMap.put("MobyDick", "It was prepared by Professor Eugene F. Irey at the University of Colorado.");
-
-        return booksMap;
-    }
     public static void testQuery(HazelcastInstance hz) throws ExecutionException, InterruptedException {
         JobTracker jobTracker = hz.getJobTracker("word-count");
 
@@ -107,18 +122,27 @@ public class Client {
         Map<String, Long> result = future.get();
         logger.info("RESULTS: "+result.toString());
     }
+    public static IMap<String,String> getBooksMap(HazelcastInstance client) {
+        IMap<String,String> booksMap = client.getMap("books");
+
+        booksMap.put("Dracula","  3 May. Bistriz.- Left Munich at 8:35 P.M., on 1st May, arriving at");
+        booksMap.put("Dracula","Vienna early next morning; should have arrived at 6:46, but train");
+        booksMap.put("MobyDick", "This text of Melville's Moby-Dick is based on the Hendricks House edition.");
+        booksMap.put("MobyDick", "It was prepared by Professor Eugene F. Irey at the University of Colorado.");
+
+        return booksMap;
+    }
 
     /* *********************************************************** */
     /* ************************* QUERY 1 ************************* */
     /* *********************************************************** */
 
     private static void query1(HazelcastInstance hz, String fileName) {
-
         JobTracker jobTracker = hz.getJobTracker("provinceRegion");
 
         IList<Data> list = getQuery1List(hz, fileName);
+        startExecutionTime();
         final KeyValueSource<String, Data> source = KeyValueSource.fromList( list );
-
 
         Job<String, Data> job = jobTracker.newJob(source);
         ICompletableFuture<Map<String, Integer>> future = job
@@ -127,21 +151,13 @@ public class Client {
                 .submit(new OrderStringIntMapCollator()); // adentro del submit recibe un collator para ordenar
 
         Map<String, Integer> result = null;
-        try {
-            result = future.get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
-        logger.info("RESULTS: "+result.toString());
+        endQuery("Query 1", future, result);
 
     }
-
     private static IList<Data> getQuery1List(HazelcastInstance client, String fileName) {
         IList<Data> list = client.getList("provinceRegion");
         list.clear();
-        DataReader.readToList(list, fileName);
+        DataReader.readToList(list, fileName, null);
         return list;
     }
 
@@ -151,7 +167,6 @@ public class Client {
 
     private static void query2(HazelcastInstance hz, String fileName, String provinceName, int n) {
         JobTracker jobTracker = hz.getJobTracker("departmentCount");
-
         IList<Data> list = getQuery2List(hz, fileName, provinceName);
 
         final KeyValueSource<String, Data> source = KeyValueSource.fromList(list);
@@ -162,27 +177,25 @@ public class Client {
                 .submit(new Query2CountCollator(n));
 
         Map<String, Long> result = null;
-        // TODO --> Check what to do with these exceptions
-        try {
-            result = future.get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
-
-        logger.info("RESULTS: "+result.toString());
+        endQuery("Query 2 (with province " + provinceName + " and n " + n + ")", future, result);
     }
-
     private static IList<Data> getQuery2List(HazelcastInstance client, String fileName, String provinceName) {
         IList<Data> list = client.getList("departments");
         list.clear();
-        DataReader.readToList(list, fileName);
+        DataReader.readToList(list, fileName, provinceName);
+        startExecutionTime();
+        /*
         // FIXME - This could be replaced with a Predicate, but don't know how to do that (because is on the value, not the key)
+        list.forEach((d)->{
+            if (!d.getProvinceName().toLowerCase().equals(provinceName.toLowerCase()))
+                list.remove(d);
+        });
+
         for (Data d : list) {
             if (!d.getProvinceName().toLowerCase().equals(provinceName.toLowerCase()))
                 list.remove(d);
         }
+        */
         return list;
     }
 
@@ -191,10 +204,10 @@ public class Client {
     /* *********************************************************** */
 
     private static void query3(HazelcastInstance hz, String fileName) {
-
         JobTracker jobTracker = hz.getJobTracker("UnemploymentIndex");
-
         IList<Data> list = getQuery3List(hz, fileName);
+
+        startExecutionTime();
         final KeyValueSource<String, Data> source = KeyValueSource.fromList( list );
 
 
@@ -206,21 +219,13 @@ public class Client {
 
 
         Map<String, BigDecimal> result = null;
-        try {
-            result = future.get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
-        logger.info("RESULTS: "+result.toString());
+        endQuery("Query 3", future, result);
 
     }
-
     private static IList<Data> getQuery3List(HazelcastInstance client, String fileName) {
         IList<Data> list = client.getList("UnemploymentIndex");
         list.clear();
-        DataReader.readToList(list, fileName);
+        DataReader.readToList(list, fileName, null);
         return list;
     }
 
@@ -233,6 +238,7 @@ public class Client {
         JobTracker jobTracker = hz.getJobTracker("HogarCount");
 
         IList<Data> list = getQuery4List(hz, fileName);
+        startExecutionTime();
         final KeyValueSource<String, Data> source = KeyValueSource.fromList( list );
 
 
@@ -243,21 +249,13 @@ public class Client {
                 .submit(new OrderStringIntMapCollator()); // adentro del submit recibe un collator para ordenar
 
         Map<String, Integer> result = null;
-        try {
-            result = future.get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
-        logger.info("RESULTS: "+result.toString());
+        endQuery("Query 4", future, result);
 
     }
-
     private static IList<Data> getQuery4List(HazelcastInstance client, String fileName) {
         IList<Data> list = client.getList("HogarCount");
         list.clear();
-        DataReader.readToList(list, fileName);
+        DataReader.readToList(list, fileName, null);
         return list;
     }
 
@@ -269,7 +267,7 @@ public class Client {
         JobTracker jobTracker = hz.getJobTracker("regionAverage");
 
         IList<Data> list = getQuery5List(hz, fileName);
-
+        startExecutionTime();
         final KeyValueSource<String, Data> source = KeyValueSource.fromList(list);
         Job<String, Data> job = jobTracker.newJob(source);
         ICompletableFuture<Map<String, Float>> future = job
@@ -279,21 +277,12 @@ public class Client {
                 .submit(new Query5Collator());
 
         Map<String, Float> result = null;
-        // TODO --> Check what to do with these exceptions
-        try {
-            result = future.get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
-
-        logger.info("RESULTS: "+result.toString());
+        endQuery("Query 5", future, result);
     }
     private static IList<Data> getQuery5List(HazelcastInstance client, String fileName) {
         IList<Data> list = client.getList("regionAvg");
         list.clear();
-        DataReader.readToList(list, fileName);
+        DataReader.readToList(list, fileName, null);
         return list;
     }
 
@@ -304,8 +293,8 @@ public class Client {
     private static void query6(HazelcastInstance hz, String fileName, int n) {
 
         JobTracker jobTracker = hz.getJobTracker("departmentInProvince");
-
         IList<Data> list = getQuery6List(hz, fileName);
+        startExecutionTime();
         final KeyValueSource<String, Data> source = KeyValueSource.fromList( list );
 
 
@@ -315,20 +304,13 @@ public class Client {
                 .reducer(new DepartmentReducerFactory())
                 .submit(new DepartmentCollator(n)); // adentro del submit recibe un collator para ordenar
 
-        try {
-            Map<String, DepartmentNameOcurrenciesCount> result = future.get();
-            logQuery6(result);
-        } catch (InterruptedException e1) {
-
-        } catch (ExecutionException e) {
-
-        }
+        Map<String, DepartmentNameOcurrenciesCount> result = null;
+        endQuery("Query 6 with n " + n, future, result);
     }
-
     private static IList<Data> getQuery6List(HazelcastInstance client, String fileName) {
         IList<Data> list = client.getList("departmentInProvince");
         list.clear();
-        DataReader.readToList(list, fileName);
+        DataReader.readToList(list, fileName, null);
         return list;
     }
 
@@ -341,8 +323,8 @@ public class Client {
         JobTracker jobTracker = hz.getJobTracker("provincePairInDepartment");
 
         IList<Data> list = getQuery7List(hz, fileName);
+        startExecutionTime();
         final KeyValueSource<String, Data> source = KeyValueSource.fromList( list );
-
 
         Job<String, Data> job = jobTracker.newJob(source);
         ICompletableFuture<Map<String, DepartmentPairOcurrenciesCount>> future = job
@@ -351,22 +333,13 @@ public class Client {
                 .reducer(new DepartmentPairReducerFactory())
                 .submit(new DepartmentPairCollator(1)); // adentro del submit recibe un collator para ordenar
 
-        try {
-            Map<String, DepartmentPairOcurrenciesCount> result = future.get();
-            for (DepartmentPairOcurrenciesCount department : result.values()) {
-                logger.info(department.toString());
-            }
-        } catch (InterruptedException e1) {
-
-        } catch (ExecutionException e) {
-
-        }
+        Map<String, DepartmentPairOcurrenciesCount> result = null;
+        endQuery("Query 7.1 with n " + n, future, result);
     }
-
     private static IList<Data> getQuery7List(HazelcastInstance client, String fileName) {
         IList<Data> list = client.getList("provincePairInDepartment");
         list.clear();
-        DataReader.readToList(list, fileName);
+        DataReader.readToList(list, fileName, null);
         return list;
     }
 
@@ -379,6 +352,7 @@ public class Client {
         JobTracker jobTracker = hz.getJobTracker("provincePairInDepartment");
 
         IList<Data> list = getQuery7v2List(hz, fileName);
+        startExecutionTime();
         final KeyValueSource<String, Data> source = KeyValueSource.fromList( list );
 
 
@@ -409,13 +383,14 @@ public class Client {
 
         } catch (ExecutionException e) {
 
+        } finally {
+            logExecutionTime("Query 7.2 with n " + n);
         }
     }
-
     private static IList<Data> getQuery7v2List(HazelcastInstance client, String fileName) {
         IList<Data> list = client.getList("provincePairInDepartment");
         list.clear();
-        DataReader.readToList(list, fileName);
+        DataReader.readToList(list, fileName, null);
         return list;
     }
 }

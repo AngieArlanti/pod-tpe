@@ -10,6 +10,6 @@ public class Query2Mapper implements com.hazelcast.mapreduce.Mapper<String, Data
 
     @Override
     public void map(String s, Data d, Context<String, Long> context) {
-        context.emit(d.getDepartmentName(), 1L);
+        context.emit(d.getDepartmentName(),1L);
     }
 }
