@@ -1,4 +1,4 @@
-package ar.edu.itba.pod.query1;
+package ar.edu.itba.pod.api;
 
 import com.hazelcast.mapreduce.Collator;
 
@@ -6,7 +6,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-public class ProvinceRegionCollator implements Collator<Map.Entry<String, Integer>, Map<String, Integer>>{
+public class OrderStringIntMapCollator implements Collator<Map.Entry<String, Integer>, Map<String, Integer>>{
     @Override
     public Map<String, Integer> collate(Iterable<Map.Entry<String, Integer>> iterable) {
         List<Map.Entry<String, Integer>> list = StreamSupport.stream(iterable.spliterator(), false)

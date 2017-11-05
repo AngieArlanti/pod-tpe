@@ -1,15 +1,21 @@
 package ar.edu.itba.pod.client;
 
+import ar.edu.itba.pod.api.OrderStringIntMapCollator;
 import ar.edu.itba.pod.example.TokenizerMapper;
 import ar.edu.itba.pod.example.WordCountReducerFactory;
 
 import ar.edu.itba.pod.model.Data;
 
 import ar.edu.itba.pod.model.DepartmentNameOcurrenciesCount;
-/*import ar.edu.itba.pod.query4.HogarCountCollator;
-import ar.edu.itba.pod.query4.HogarCountMapper;
-import ar.edu.itba.pod.query4.HogarCountReducerFactory;*/
+
 import ar.edu.itba.pod.model.DepartmentPairOcurrenciesCount;
+import ar.edu.itba.pod.query1.ProvinceRegionMapper;
+import ar.edu.itba.pod.query1.ProvinceRegionReducerFactory;
+import ar.edu.itba.pod.query3.UnemploymentIndexCollator;
+import ar.edu.itba.pod.query3.UnemploymentIndexMapper;
+import ar.edu.itba.pod.query3.UnemploymentIndexReducerFactory;
+import ar.edu.itba.pod.query4.HogarCountMapper;
+import ar.edu.itba.pod.query4.HogarCountReducerFactory;
 import ar.edu.itba.pod.query6.DepartmentCollator;
 import ar.edu.itba.pod.query6.DepartmentMapper;
 import ar.edu.itba.pod.query6.DepartmentReducerFactory;
@@ -18,10 +24,7 @@ import ar.edu.itba.pod.query5.Query5Collator;
 import ar.edu.itba.pod.query5.Query5Combiner;
 import ar.edu.itba.pod.query5.Query5Mapper;
 import ar.edu.itba.pod.query5.Query5ReducerFactory;
-import ar.edu.itba.pod.query7.DeparmentPairCombinerFactory;
-import ar.edu.itba.pod.query7.DepartmentInProvinceMapper;
-import ar.edu.itba.pod.query7.DepartmentPairCollator;
-import ar.edu.itba.pod.query7.DepartmentPairReducerFactory;
+import ar.edu.itba.pod.query7.*;
 import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.client.config.ClientConfig;
 
@@ -40,6 +43,7 @@ import com.hazelcast.mapreduce.KeyValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.math.BigDecimal;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
@@ -53,42 +57,14 @@ public class Client {
         final ClientConfig config = new ClientConfig();
         final HazelcastInstance hz = HazelcastClient.newHazelcastClient(config);
 
-        /* //query 1
-
-        final IList<Data> list = hz.getList( "my-list" );
-        DataReader.readToList(list, "/Users/agophurmuz/Downloads/census100.csv");
-        final KeyValueSource<String, Data> source = KeyValueSource.fromList( list );
-
-        Job<String, Data> job = jobTracker.newJob(source);
-        ICompletableFuture<Map<String, Integer>> future = job
-                .mapper(new ProvinceRegionMapper())
-                .reducer(new ProvinceRegionReducerFactory())
-                .submit(new ProvinceRegionCollator()); // adentro del submit recibe un collator para ordenar
-         */
-
-
-        /*/ query 4
-        final IList<Data> list = hz.getList( "my-list" );
-
-        list.clear();
-        DataReader.readToList(list, "/Users/agophurmuz/Downloads/census100.csv");
-        final KeyValueSource<String, Data> source = KeyValueSource.fromList( list );
-
-        Job<String, Data> job = jobTracker.newJob(source);
-        ICompletableFuture<Map<String, Integer>> future = job
-                .mapper(new HogarCountMapper())
-                .reducer(new HogarCountReducerFactory())
-                .submit(new HogarCountCollator()); // adentro del submit recibe un collator para ordenar
-
-        Map<String, Integer> result = future.get();
-
-        logger.info("RESULTS: "+result.toString());*/
-
-
-
-        //query2(hz, "census100.csv", "Buenos Aires", 2);
-        //query5(hz, "census1000000.csv");
+        query1(hz, "census100.csv");
+        query2(hz, "census100.csv", "Buenos Aires", 2);
+        query3(hz, "census100.csv");
+        query4(hz, "census100.csv");
+        query5(hz, "census100.csv");
+        query6(hz, "census100.csv", 2);
         query7(hz, "census100.csv", 2);
+        query7v2(hz, "census100.csv", 1);
 
     }
 
@@ -133,6 +109,43 @@ public class Client {
     }
 
     /* *********************************************************** */
+    /* ************************* QUERY 1 ************************* */
+    /* *********************************************************** */
+
+    private static void query1(HazelcastInstance hz, String fileName) {
+
+        JobTracker jobTracker = hz.getJobTracker("provinceRegion");
+
+        IList<Data> list = getQuery1List(hz, fileName);
+        final KeyValueSource<String, Data> source = KeyValueSource.fromList( list );
+
+
+        Job<String, Data> job = jobTracker.newJob(source);
+        ICompletableFuture<Map<String, Integer>> future = job
+                .mapper(new ProvinceRegionMapper())
+                .reducer(new ProvinceRegionReducerFactory())
+                .submit(new OrderStringIntMapCollator()); // adentro del submit recibe un collator para ordenar
+
+        Map<String, Integer> result = null;
+        try {
+            result = future.get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        logger.info("RESULTS: "+result.toString());
+
+    }
+
+    private static IList<Data> getQuery1List(HazelcastInstance client, String fileName) {
+        IList<Data> list = client.getList("provinceRegion");
+        list.clear();
+        DataReader.readToList(list, fileName);
+        return list;
+    }
+
+    /* *********************************************************** */
     /* ************************* QUERY 2 ************************* */
     /* *********************************************************** */
 
@@ -170,6 +183,81 @@ public class Client {
             if (!d.getProvinceName().toLowerCase().equals(provinceName.toLowerCase()))
                 list.remove(d);
         }
+        return list;
+    }
+
+    /* *********************************************************** */
+    /* ************************* QUERY 3 ************************* */
+    /* *********************************************************** */
+
+    private static void query3(HazelcastInstance hz, String fileName) {
+
+        JobTracker jobTracker = hz.getJobTracker("UnemploymentIndex");
+
+        IList<Data> list = getQuery3List(hz, fileName);
+        final KeyValueSource<String, Data> source = KeyValueSource.fromList( list );
+
+
+        Job<String, Data> job = jobTracker.newJob(source);
+        ICompletableFuture<Map<String, BigDecimal>> future = job
+                .mapper(new UnemploymentIndexMapper())
+                .reducer(new UnemploymentIndexReducerFactory())
+                .submit(new UnemploymentIndexCollator()); // adentro del submit recibe un collator para ordenar
+
+
+        Map<String, BigDecimal> result = null;
+        try {
+            result = future.get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        logger.info("RESULTS: "+result.toString());
+
+    }
+
+    private static IList<Data> getQuery3List(HazelcastInstance client, String fileName) {
+        IList<Data> list = client.getList("UnemploymentIndex");
+        list.clear();
+        DataReader.readToList(list, fileName);
+        return list;
+    }
+
+    /* *********************************************************** */
+    /* ************************* QUERY 4 ************************* */
+    /* *********************************************************** */
+
+    private static void query4(HazelcastInstance hz, String fileName) {
+
+        JobTracker jobTracker = hz.getJobTracker("HogarCount");
+
+        IList<Data> list = getQuery4List(hz, fileName);
+        final KeyValueSource<String, Data> source = KeyValueSource.fromList( list );
+
+
+        Job<String, Data> job = jobTracker.newJob(source);
+        ICompletableFuture<Map<String, Integer>> future = job
+                .mapper(new HogarCountMapper())
+                .reducer(new HogarCountReducerFactory())
+                .submit(new OrderStringIntMapCollator()); // adentro del submit recibe un collator para ordenar
+
+        Map<String, Integer> result = null;
+        try {
+            result = future.get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        logger.info("RESULTS: "+result.toString());
+
+    }
+
+    private static IList<Data> getQuery4List(HazelcastInstance client, String fileName) {
+        IList<Data> list = client.getList("HogarCount");
+        list.clear();
+        DataReader.readToList(list, fileName);
         return list;
     }
 
@@ -276,6 +364,55 @@ public class Client {
     }
 
     private static IList<Data> getQuery7List(HazelcastInstance client, String fileName) {
+        IList<Data> list = client.getList("provincePairInDepartment");
+        list.clear();
+        DataReader.readToList(list, fileName);
+        return list;
+    }
+
+    /* *********************************************************** */
+    /* ************************* QUERY 7v2 ************************* */
+    /* *********************************************************** */
+
+    private static void query7v2(HazelcastInstance hz, String fileName, int n) {
+
+        JobTracker jobTracker = hz.getJobTracker("provincePairInDepartment");
+
+        IList<Data> list = getQuery7v2List(hz, fileName);
+        final KeyValueSource<String, Data> source = KeyValueSource.fromList( list );
+
+
+        Job<String, Data> job = jobTracker.newJob(source);
+        ICompletableFuture<Map<String, Map<String, String>>> future = job
+                .mapper(new DepartmentInProvinceMapper())
+                .combiner(new DeparmentPairCombinerFactory())
+                .reducer(new DepartmentPairReducerFactory())
+                .submit(); // adentro del submit recibe un collator para ordenar
+
+        try {
+            Map<String, Map<String, String>> result = future.get();
+            IMap<String, Map<String, String>> imap = hz.getMap("provincePairInDepartment");
+            for (String key : result.keySet()){
+                imap.put(key, result.get(key));
+            }
+            final KeyValueSource<String, Map<String, String>> source1 = KeyValueSource.fromMap( imap );
+            Job<String, Map<String, String>> job1 = jobTracker.newJob(source1);
+            ICompletableFuture<Map<String, Integer>> future1 = job1
+                    .mapper(new ProvPairMapper())
+                    .reducer(new ProvPairReducerFactory())
+                    .submit(new ProvPairCollator(n));
+            Map<String, Integer> result1 = future1.get();
+            for (String pairprov : result1.keySet()) {
+                logger.info(pairprov +","+ result1.get(pairprov));
+            }
+        } catch (InterruptedException e1) {
+
+        } catch (ExecutionException e) {
+
+        }
+    }
+
+    private static IList<Data> getQuery7v2List(HazelcastInstance client, String fileName) {
         IList<Data> list = client.getList("provincePairInDepartment");
         list.clear();
         DataReader.readToList(list, fileName);
