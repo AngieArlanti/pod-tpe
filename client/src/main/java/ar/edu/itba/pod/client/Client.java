@@ -55,17 +55,82 @@ public class Client {
     public static void main(String[] args) throws ExecutionException, InterruptedException {
         logger.info("pod-map-reduce Client Starting ...");
 
+        String query = System.getProperty("query");
+        String file = System.getProperty("file");
+        String province = System.getProperty("province");
+        String n = System.getProperty("n");
+
         final ClientConfig config = new ClientConfig();
         final HazelcastInstance hz = HazelcastClient.newHazelcastClient(config);
 
-        //query1(hz, "census1000000.csv");
-        query2(hz, "census1000000.csv", "Santa Fe", 5);
-        query3(hz, "census1000000.csv");
-        query4(hz, "census1000000.csv");
-        query5(hz, "census1000000.csv");
-        query6(hz, "census1000000.csv", 2);
-        query7(hz, "census1000000.csv", 2);
-        query7v2(hz, "census1000000.csv", 1);
+        if (query == null) {
+            logger.warn("No query specified, running query 1 instead");
+            System.setProperty("query", "1");
+            query = System.getProperty("query");
+        }
+
+        if (file == null) {
+            logger.warn("No database file specified, running with 'census/census100.csv' instead");
+            System.setProperty("file", "census/census100.csv");
+            file = System.getProperty("file");
+        }
+
+        switch (Integer.valueOf(query)) {
+            case 1:
+                query1(hz, file);
+                break;
+            case 2:
+                if (province == null) {
+                    logger.warn("No province specified, running with 'Buenos Aires' instead");
+                    System.setProperty("province", "Buenos Aires");
+                    province = System.getProperty("province");
+                }
+                if (n == null) {
+                    logger.warn("No n specified, running with 5 instead");
+                    System.setProperty("n", "5");
+                    n = System.getProperty("n");
+                }
+                query2(hz, file, province, Integer.valueOf(n));
+                break;
+            case 3:
+                query3(hz, file);
+                break;
+            case 4:
+                query4(hz, file);
+                break;
+            case 5:
+                query5(hz, file);
+                break;
+            case 6:
+                if (n == null) {
+                    logger.warn("No n specified, running with 5 instead");
+                    System.setProperty("n", "5");
+                    n = System.getProperty("n");
+                }
+                query6(hz, file, Integer.valueOf(n));
+                break;
+            case 7:
+                if (n == null) {
+                    logger.warn("No n specified, running with 5 instead");
+                    System.setProperty("n", "5");
+                    n = System.getProperty("n");
+                }
+                query7(hz, file, Integer.valueOf(n));
+                break;
+            case 8:
+                if (n == null) {
+                    logger.warn("No n specified, running with 5 instead");
+                    System.setProperty("n", "5");
+                    n = System.getProperty("n");
+                }
+                logger.info("Query 8 is a second implementation of query 7");
+                query7v2(hz, file, Integer.valueOf(n));
+                break;
+            default:
+                logger.error("Wrong query number, try again using from 1 to 8");
+                System.exit(1);
+                break;
+        }
 
     }
 
@@ -99,6 +164,7 @@ public class Client {
         } finally {
             logExecutionTime(infoLog);
             logger.info("RESULTS: "+result.toString());
+            System.exit(0);
         }
     }
 

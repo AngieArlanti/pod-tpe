@@ -5,6 +5,7 @@ import com.hazelcast.core.IList;
 
 import java.io.*;
 //import java.util.ArrayList;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 
@@ -22,7 +23,11 @@ public class DataReader {
         long startTime = System.nanoTime();
         try {
             ClassLoader classLoader = Client.class.getClassLoader();
-            csvFile = classLoader.getResource("census/" + inFile).getPath();
+            URL url = classLoader.getResource(inFile);
+            if (url == null)
+                throw new FileNotFoundException();
+            csvFile = classLoader.getResource(inFile).getPath();
+
             Client.getLogger().info("Reading from file: " + csvFile);
 
             BufferedReader br;
@@ -52,8 +57,8 @@ public class DataReader {
             }
             Client.getLogger().info("File read");
         } catch (FileNotFoundException e) {
+            Client.getLogger().error("File not found: " + inFile);
             e.printStackTrace();
-            Client.getLogger().error("File not found: " + csvFile);
         } catch (IOException e) {
             Client.getLogger().error("This other strange error: ", e);
             e.printStackTrace();
