@@ -1,5 +1,4 @@
 <!--
-
   ~ Copyright (c) 2008-2015, Hazelcast, Inc. All Rights Reserved.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,7 +23,7 @@
 -->
 <hazelcast xmlns="http://www.hazelcast.com/schema/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.hazelcast.com/schema/config hazelcast-config-3.5.xsd">
     <group>
-        <name>53373</name>
+        <name>53373-53248-52015-53852</name>
         <password>cluster-pass</password>
     </group>
     <management-center enabled="false">http://localhost:8080/mancenter</management-center>
@@ -68,7 +67,7 @@
             </aws>
         </join>
         <interfaces enabled="true">
-            <interface>10.12.160.46</interface>
+            <interface>192.168.*.*</interface>
         </interfaces>
         <ssl enabled="false"/>
         <socket-interceptor enabled="false"/>

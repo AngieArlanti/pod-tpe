@@ -1,5 +1,7 @@
 package ar.edu.itba.pod.client;
 
+import ar.edu.itba.pod.client.model.InputData;
+import ar.edu.itba.pod.client.util.CommandLineUtil;
 import ar.edu.itba.pod.example.TokenizerMapper;
 import ar.edu.itba.pod.example.WordCountReducerFactory;
 
@@ -21,6 +23,7 @@ import com.hazelcast.client.config.ClientConfig;
 import ar.edu.itba.pod.query2.Query2CountReducerFactory;
 import ar.edu.itba.pod.query2.Query2Mapper;
 
+import com.hazelcast.client.config.ClientNetworkConfig;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ICompletableFuture;
 import com.hazelcast.core.IList;
@@ -43,73 +46,42 @@ public class Client {
     public static void main(String[] args) throws ExecutionException, InterruptedException {
         logger.info("pod-map-reduce Client Starting ...");
 
-        String name = System.getProperty("name");
-        if(name == null){
-            name = "53373";
+        InputData input = CommandLineUtil.getInputData(args);
+
+        logger.info(String.format("Connecting with cluster [%s]", input.getClusterName()));
+
+        ClientConfig clientConfig = new ClientConfig();
+        ClientNetworkConfig networkConfig = clientConfig.getNetworkConfig();
+        for (String address : input.getAddresses()){
+            networkConfig.addAddress(address);
         }
-        String pass = System.getProperty("pass");
-        if (pass == null) {
-            pass = "cluster-pass";
-        }
-        logger.info(String.format("Connecting with cluster dev-name [%s]", name));
+        clientConfig.getGroupConfig().setName(input.getClusterName()).setPassword(input.getClusterPass());
 
-        ClientConfig ccfg = new ClientConfig();
-        ccfg.getGroupConfig().setName(name).setPassword(pass);
+        HazelcastInstance hz = HazelcastClient.newHazelcastClient(clientConfig);
 
-        HazelcastInstance hz = HazelcastClient.newHazelcastClient(ccfg);
+        query2(hz, input.getInPath(), input.getProvince(), input.getN());
 
-        /* //query 1
-
-        final IList<Data> list = hz.getList( "my-list" );
-        DataReader.readToList(list, "/Users/agophurmuz/Downloads/census100.csv");
-        final KeyValueSource<String, Data> source = KeyValueSource.fromList( list );
-
-        Job<String, Data> job = jobTracker.newJob(source);
-        ICompletableFuture<Map<String, Integer>> future = job
-                .mapper(new ProvinceRegionMapper())
-                .reducer(new ProvinceRegionReducerFactory())
-                .submit(new ProvinceRegionCollator()); // adentro del submit recibe un collator para ordenar
-         */
-
-        /*/ query 4
-        final IList<Data> list = hz.getList( "my-list" );
-        list.clear();
-        DataReader.readToList(list, "/Users/agophurmuz/Downloads/census100.csv");
-        final KeyValueSource<String, Data> source = KeyValueSource.fromList( list );
-
-        Job<String, Data> job = jobTracker.newJob(source);
-        ICompletableFuture<Map<String, Integer>> future = job
-                .mapper(new HogarCountMapper())
-                .reducer(new HogarCountReducerFactory())
-                .submit(new HogarCountCollator()); // adentro del submit recibe un collator para ordenar
-
-        Map<String, Integer> result = future.get();
-
-        logger.info("RESULTS: "+result.toString());
-        */
-
-        query2(hz, "census/census100.csv", "Buenos Aires", 2);
-        //query5(hz, "census1000000.csv");
     }
 
     /* *********************************************************** */
     /* ************************* TEST Qy ************************* */
     /* *********************************************************** */
 
-    public static IMap<String,String> getBooksMap(HazelcastInstance client) {
-        IMap<String,String> booksMap = client.getMap("books");
+    public static IMap<String, String> getBooksMap(HazelcastInstance client) {
+        IMap<String, String> booksMap = client.getMap("books");
 
-        booksMap.put("Dracula","  3 May. Bistriz.- Left Munich at 8:35 P.M., on 1st May, arriving at");
-        booksMap.put("Dracula","Vienna early next morning; should have arrived at 6:46, but train");
+        booksMap.put("Dracula", "  3 May. Bistriz.- Left Munich at 8:35 P.M., on 1st May, arriving at");
+        booksMap.put("Dracula", "Vienna early next morning; should have arrived at 6:46, but train");
         booksMap.put("MobyDick", "This text of Melville's Moby-Dick is based on the Hendricks House edition.");
         booksMap.put("MobyDick", "It was prepared by Professor Eugene F. Irey at the University of Colorado.");
 
         return booksMap;
     }
+
     public static void testQuery(HazelcastInstance hz) throws ExecutionException, InterruptedException {
         JobTracker jobTracker = hz.getJobTracker("word-count");
 
-        IMap<String,String> map = getBooksMap(hz);
+        IMap<String, String> map = getBooksMap(hz);
         //Source es un wrapper para IMap.
         final KeyValueSource<String, String> source = KeyValueSource.fromMap(map);
 
@@ -120,7 +92,7 @@ public class Client {
                 .submit();
 
         Map<String, Long> result = future.get();
-        logger.info("RESULTS: "+result.toString());
+        logger.info("RESULTS: " + result.toString());
     }
 
     /* *********************************************************** */
@@ -149,7 +121,7 @@ public class Client {
             e.printStackTrace();
         }
 
-        logger.info("RESULTS: "+result.toString());
+        logger.info("RESULTS: " + result.toString());
     }
 
     private static IList<Data> getQuery2List(HazelcastInstance client, String fileName, String provinceName) {
@@ -191,7 +163,7 @@ public class Client {
             e.printStackTrace();
         }
 
-        logger.info("RESULTS: "+result.toString());
+        logger.info("RESULTS: " + result.toString());
     }
 
     private static IList<Data> getQuery5List(HazelcastInstance client, String fileName) {
@@ -201,4 +173,33 @@ public class Client {
         return list;
     }
 
+
 }
+
+//    Config cfg = new Config();
+//cfg.setPort(5900);
+//cfg.setPortAutoIncrement(false);
+//
+//    NetworkConfig network = cfg.getNetworkConfig();
+//    Join join = network.getJoin();
+//join.getMulticastConfig().setEnabled(false);
+//join.getTcpIpConfig().addMember("10.45.67.32").addMember("10.45.67.100")
+//            .setRequiredMember("192.168.10.100").setEnabled(true);
+//network.getInterfaces().setEnabled(true).addInterface("10.45.67.*");
+//
+//    MapConfig mapCfg = new MapConfig();
+//mapCfg.setName("testMap");
+//mapCfg.setBackupCount(2);
+//mapCfg.getMaxSizeConfig().setSize(10000);
+//mapCfg.setTimeToLiveSeconds(300);
+//
+//    MapStoreConfig mapStoreCfg = new MapStoreConfig();
+//mapStoreCfg.setClassName("com.hazelcast.examples.DummyStore").setEnabled(true);
+//mapCfg.setMapStoreConfig(mapStoreCfg);
+//
+//    NearCacheConfig nearCacheConfig = new NearCacheConfig();
+//nearCacheConfig.setMaxSize(1000).setMaxIdleSeconds(120).setTimeToLiveSeconds(300);
+//mapCfg.setNearCacheConfig(nearCacheConfig);
+//
+//cfg.addMapConfig(mapCfg)
+//
