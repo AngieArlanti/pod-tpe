@@ -39,6 +39,14 @@ public class Data implements DataSerializable{
         return provinceName;
     }
 
+    public ActivityCondition getActivityCondition() {
+        return activityCondition;
+    }
+
+    public void setActivityCondition(ActivityCondition activityCondition) {
+        this.activityCondition = activityCondition;
+    }
+
     @Override
     public void writeData(ObjectDataOutput out) throws IOException {
         out.writeInt(activityCondition.ordinal());
