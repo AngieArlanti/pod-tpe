@@ -26,7 +26,7 @@ public class DataReader {
             InputStream is = DataReader.class.getClassLoader().getResourceAsStream(inFile);
             if (is == null) {
                 csvFile = DEFAULT_FILE;
-                Client.getLogger().warn("File not found: " + inFile + ". Loading default file: " + csvFile);
+                Client.getOutputLogger().warn("File not found: " + inFile + ". Loading default file: " + csvFile);
                 is = DataReader.class.getClassLoader().getResourceAsStream(DEFAULT_FILE);
             }
             final Reader aReader = new InputStreamReader(is);

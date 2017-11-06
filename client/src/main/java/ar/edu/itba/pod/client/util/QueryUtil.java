@@ -293,7 +293,7 @@ public class QueryUtil {
             System.exit(1);
         } finally {
             logExecutionTime(infoLog);
-            if (result == null) {
+            if (result != null) {
                 outputLogger.info("RESULTS: "+result.toString());
             } else {
                 outputLogger.warn("No Results");
