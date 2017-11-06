@@ -3,8 +3,7 @@ package ar.edu.itba.pod.client;
 import ar.edu.itba.pod.client.model.InputData;
 import ar.edu.itba.pod.client.util.CommandLineUtil;
 import ar.edu.itba.pod.api.OrderStringIntMapCollator;
-import ar.edu.itba.pod.example.TokenizerMapper;
-import ar.edu.itba.pod.example.WordCountReducerFactory;
+
 
 import ar.edu.itba.pod.model.Data;
 
@@ -54,20 +53,20 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 public class Client {
-    //System.setProperty("logfilename", input.getTimeOutPath().getAbsolutePath());
-    private static Logger logger; //= LoggerFactory.getLogger(Client.class);
+
+    private static Logger logger;
     private static IMap<String, String> booksMap;
     private static long startTime;
     private static PrintWriter printWriter;
 
 
     public static void main(String[] args) throws ExecutionException, InterruptedException {
-        //try {
-            //logger.info("pod-map-reduce Client Starting ...");
 
-            InputData input = CommandLineUtil.getInputData(args);
-            System.setProperty("logfilename", input.getTimeOutPath().getAbsolutePath());
-            logger = LoggerFactory.getLogger(Client.class);
+        InputData input = CommandLineUtil.getInputData(args);
+        System.setProperty("logfilename", input.getTimeOutPath().getAbsolutePath());
+
+        logger = LoggerFactory.getLogger(Client.class);
+        logger.info("pod-map-reduce Client Starting ...");
             //if(!input.getOutPathFile().exists()){
             //    input.setOutPathFile(new File(input.getOutPathFile().getAbsolutePath()));
             //}
@@ -170,36 +169,7 @@ public class Client {
         }
     }
 
-    /* *********************************************************** */
-    /* ************************* TEST Qy ************************* */
-    /* *********************************************************** */
 
-    public static void testQuery(HazelcastInstance hz) throws ExecutionException, InterruptedException {
-        JobTracker jobTracker = hz.getJobTracker("word-count");
-
-        IMap<String, String> map = getBooksMap(hz);
-        //Source es un wrapper para IMap.
-        final KeyValueSource<String, String> source = KeyValueSource.fromMap(map);
-
-        Job<String, String> job = jobTracker.newJob(source);
-        ICompletableFuture<Map<String, Long>> future = job
-                .mapper(new TokenizerMapper())
-                .reducer(new WordCountReducerFactory())
-                .submit();
-
-        Map<String, Long> result = future.get();
-        logger.info("RESULTS: " + result.toString());
-    }
-    public static IMap<String,String> getBooksMap(HazelcastInstance client) {
-        IMap<String,String> booksMap = client.getMap("books");
-
-        booksMap.put("Dracula","  3 May. Bistriz.- Left Munich at 8:35 P.M., on 1st May, arriving at");
-        booksMap.put("Dracula","Vienna early next morning; should have arrived at 6:46, but train");
-        booksMap.put("MobyDick", "This text of Melville's Moby-Dick is based on the Hendricks House edition.");
-        booksMap.put("MobyDick", "It was prepared by Professor Eugene F. Irey at the University of Colorado.");
-
-        return booksMap;
-    }
 
     /* *********************************************************** */
     /* ************************* QUERY 1 ************************* */
@@ -478,30 +448,3 @@ public class Client {
     }
 }
 
-//    Config cfg = new Config();
-//cfg.setPort(5900);
-//cfg.setPortAutoIncrement(false);
-//
-//    NetworkConfig network = cfg.getNetworkConfig();
-//    Join join = network.getJoin();
-//join.getMulticastConfig().setEnabled(false);
-//join.getTcpIpConfig().addMember("10.45.67.32").addMember("10.45.67.100")
-//            .setRequiredMember("192.168.10.100").setEnabled(true);
-//network.getInterfaces().setEnabled(true).addInterface("10.45.67.*");
-//
-//    MapConfig mapCfg = new MapConfig();
-//mapCfg.setName("testMap");
-//mapCfg.setBackupCount(2);
-//mapCfg.getMaxSizeConfig().setSize(10000);
-//mapCfg.setTimeToLiveSeconds(300);
-//
-//    MapStoreConfig mapStoreCfg = new MapStoreConfig();
-//mapStoreCfg.setClassName("com.hazelcast.examples.DummyStore").setEnabled(true);
-//mapCfg.setMapStoreConfig(mapStoreCfg);
-//
-//    NearCacheConfig nearCacheConfig = new NearCacheConfig();
-//nearCacheConfig.setMaxSize(1000).setMaxIdleSeconds(120).setTimeToLiveSeconds(300);
-//mapCfg.setNearCacheConfig(nearCacheConfig);
-//
-//cfg.addMapConfig(mapCfg)
-//
