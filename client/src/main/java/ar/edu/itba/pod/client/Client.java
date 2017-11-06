@@ -46,19 +46,38 @@ import com.hazelcast.mapreduce.KeyValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.math.BigDecimal;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 public class Client {
-    private static Logger logger = LoggerFactory.getLogger(Client.class);
+    //System.setProperty("logfilename", input.getTimeOutPath().getAbsolutePath());
+    private static Logger logger; //= LoggerFactory.getLogger(Client.class);
     private static IMap<String, String> booksMap;
     private static long startTime;
+    private static PrintWriter printWriter;
+
 
     public static void main(String[] args) throws ExecutionException, InterruptedException {
-        logger.info("pod-map-reduce Client Starting ...");
+        //try {
+            //logger.info("pod-map-reduce Client Starting ...");
 
-        InputData input = CommandLineUtil.getInputData(args);
+            InputData input = CommandLineUtil.getInputData(args);
+            System.setProperty("logfilename", input.getTimeOutPath().getAbsolutePath());
+            logger = LoggerFactory.getLogger(Client.class);
+            //if(!input.getOutPathFile().exists()){
+            //    input.setOutPathFile(new File(input.getOutPathFile().getAbsolutePath()));
+            //}
+        try {
+            printWriter = new PrintWriter(input.getOutPathFile(), "UTF-8");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
 
         logger.info(String.format("Connecting with cluster [%s]", input.getClusterName()));
 
@@ -77,37 +96,42 @@ public class Client {
         String province = input.getProvince();
 
 
-        switch (query) {
-            case 1:
-                query1(hz, inPath);
-                break;
-            case 2:
-                query2(hz, inPath, province, Integer.valueOf(n));
-                break;
-            case 3:
-                query3(hz, inPath);
-                break;
-            case 4:
-                query4(hz, inPath);
-                break;
-            case 5:
-                query5(hz, inPath);
-                break;
-            case 6:
-                query6(hz, inPath, Integer.valueOf(n));
-                break;
-            case 7:
-                query7(hz, inPath, Integer.valueOf(n));
-                break;
-            case 8:
-                logger.info("Query 8 is a second implementation of query 7");
-                query7v2(hz, inPath, Integer.valueOf(n));
-                break;
-            default:
-                logger.error("Wrong query number, try again using from 1 to 8");
-                System.exit(1);
-                break;
-        }
+            switch (query) {
+                case 1:
+                    query1(hz, inPath);
+                    break;
+                case 2:
+                    query2(hz, inPath, province, Integer.valueOf(n));
+                    break;
+                case 3:
+                    query3(hz, inPath);
+                    break;
+                case 4:
+                    query4(hz, inPath);
+                    break;
+                case 5:
+                    query5(hz, inPath);
+                    break;
+                case 6:
+                    query6(hz, inPath, Integer.valueOf(n));
+                    break;
+                case 7:
+                    query7(hz, inPath, Integer.valueOf(n));
+                    break;
+                case 8:
+                    logger.info("Query 8 is a second implementation of query 7");
+                    query7v2(hz, inPath, Integer.valueOf(n));
+                    break;
+                default:
+                    logger.error("Wrong query number, try again using from 1 to 8");
+                    System.exit(1);
+                    break;
+            }
+       /* } catch (Exception e) {
+            System.out.println(" Unexpected error occured ");
+            e.printStackTrace();
+            System.exit(1);
+        }*/
 
     }
 
@@ -140,6 +164,7 @@ public class Client {
             e.printStackTrace();
         } finally {
             logExecutionTime(infoLog);
+            printWriter.println("RESULTS: "+result.toString());
             logger.info("RESULTS: "+result.toString());
             System.exit(0);
         }
@@ -256,14 +281,28 @@ public class Client {
 
 
         Job<String, Data> job = jobTracker.newJob(source);
-        ICompletableFuture<Map<String, BigDecimal>> future = job
+        ICompletableFuture<Map<String, Double>> future = job
                 .mapper(new UnemploymentIndexMapper())
                 .reducer(new UnemploymentIndexReducerFactory())
                 .submit(new UnemploymentIndexCollator()); // adentro del submit recibe un collator para ordenar
 
 
-        Map<String, BigDecimal> result = null;
-        endQuery("Query 3", future, result);
+        //Map<String, Double> result = null;
+        //endQuery("Query 3", future, result);
+
+        try {
+            Map<String, Double> result = future.get();
+            for (String key : result.keySet()){
+                logger.info(String.format("%s = %.02f", key, result.get(key)));
+            }
+            logExecutionTime("Query 3");
+            System.exit(0);
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
 
     }
     private static IList<Data> getQuery3List(HazelcastInstance client, String fileName) {

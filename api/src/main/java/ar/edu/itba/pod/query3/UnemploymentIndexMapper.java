@@ -10,7 +10,6 @@ public class UnemploymentIndexMapper implements Mapper<String, Data, String, Act
     public void map(String keyIn, Data valueIn, Context<String, ActivityCondition> context) {
         if(valueIn.getActivityCondition().equals(ActivityCondition.NOTBUSY) ||
                 valueIn.getActivityCondition().equals(ActivityCondition.BUSY)){
-            System.out.println("region =  " + valueIn.getRegion() +" actividad = " +valueIn.getActivityCondition());
             context.emit(valueIn.getRegion(), valueIn.getActivityCondition());
         }
     }
