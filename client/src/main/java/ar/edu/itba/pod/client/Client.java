@@ -22,7 +22,7 @@ import static ar.edu.itba.pod.client.util.QueryUtil.*;
 
 public class Client {
 
-    private static Logger logger = LoggerFactory.getLogger(Client.class);
+    private static Logger logger ;
     private static PrintWriter printWriter;
 
     public static void main(String[] args) throws ExecutionException, InterruptedException {
