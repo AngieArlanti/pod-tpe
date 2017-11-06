@@ -8,13 +8,12 @@ import ar.edu.itba.pod.model.DepartmentNameOcurrenciesCount;
 import ar.edu.itba.pod.model.DepartmentPairOcurrenciesCount;
 import ar.edu.itba.pod.query1.ProvinceRegionMapper;
 import ar.edu.itba.pod.query1.ProvinceRegionReducerFactory;
-import ar.edu.itba.pod.query2.Query2Combiner;
 import ar.edu.itba.pod.query2.Query2CountCollator;
 import ar.edu.itba.pod.query2.Query2CountReducerFactory;
 import ar.edu.itba.pod.query2.Query2Mapper;
-import ar.edu.itba.pod.query3.UnemploymentIndexCollator;
 import ar.edu.itba.pod.query3.UnemploymentIndexMapper;
 import ar.edu.itba.pod.query3.UnemploymentIndexReducerFactory;
+import ar.edu.itba.pod.query3.UnemploymentIndexCollator;
 import ar.edu.itba.pod.query4.HogarCountMapper;
 import ar.edu.itba.pod.query4.HogarCountReducerFactory;
 import ar.edu.itba.pod.query5.Query5Collator;
@@ -54,7 +53,7 @@ public class QueryUtil {
     public static void query1(HazelcastInstance hz, String fileName, String listName) {
         JobTracker jobTracker = hz.getJobTracker(listName);
 
-        IList<Data> list = getList(listName,hz,fileName,null);
+        IList<Data> list = hz.getList(listName);
         startExecutionTime();
         final KeyValueSource<String, Data> source = KeyValueSource.fromList( list );
 
@@ -144,7 +143,7 @@ public class QueryUtil {
 
         JobTracker jobTracker = hz.getJobTracker(listName);
 
-        IList<Data> list = getList(listName,hz,fileName,null);
+        IList<Data> list = hz.getList(listName);
         startExecutionTime();
         final KeyValueSource<String, Data> source = KeyValueSource.fromList( list );
 
@@ -167,7 +166,7 @@ public class QueryUtil {
     public static void query5(HazelcastInstance hz, String fileName, String listName) {
         JobTracker jobTracker = hz.getJobTracker(listName);
 
-        IList<Data> list = getList(listName,hz,fileName,null);
+        IList<Data> list = hz.getList(listName);
         startExecutionTime();
         final KeyValueSource<String, Data> source = KeyValueSource.fromList(list);
         Job<String, Data> job = jobTracker.newJob(source);
@@ -188,7 +187,7 @@ public class QueryUtil {
     public static void query6(HazelcastInstance hz, String fileName, int n, String listName) {
 
         JobTracker jobTracker = hz.getJobTracker(listName);
-        IList<Data> list = getList(listName,hz,fileName,null);
+        IList<Data> list = hz.getList(listName);
         startExecutionTime();
         final KeyValueSource<String, Data> source = KeyValueSource.fromList( list );
 
@@ -211,7 +210,7 @@ public class QueryUtil {
 
         JobTracker jobTracker = hz.getJobTracker(listName);
 
-        IList<Data> list = getList(listName,hz,fileName,null);
+        IList<Data> list = hz.getList(listName);
         startExecutionTime();
         final KeyValueSource<String, Data> source = KeyValueSource.fromList( list );
 
@@ -235,7 +234,7 @@ public class QueryUtil {
 
         JobTracker jobTracker = hz.getJobTracker(listName);
 
-        IList<Data> list = getList(listName,hz,fileName,null);
+        IList<Data> list = hz.getList(listName);
         startExecutionTime();
         final KeyValueSource<String, Data> source = KeyValueSource.fromList( list );
 
@@ -298,7 +297,7 @@ public class QueryUtil {
             } else {
                 outputLogger.warn("No Results");
             }
-            System.exit(0);
+//            System.exit(0);
         }
     }
 }

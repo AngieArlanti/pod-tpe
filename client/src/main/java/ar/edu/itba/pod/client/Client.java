@@ -52,37 +52,16 @@ public class Client {
 
         HazelcastInstance hz = HazelcastClient.newHazelcastClient(clientConfig);
 
-        switch (query) {
-            case 1:
-                query1(hz, inPath, clusterName);
-                break;
-            case 2:
-                query2(hz, inPath, province, n);
-                break;
-            case 3:
-                query3(hz, inPath, clusterName);
-                break;
-            case 4:
-                query4(hz, inPath, clusterName);
-                break;
-            case 5:
-                query5(hz, inPath, clusterName);
-                break;
-            case 6:
-                query6(hz, inPath, n, clusterName);
-                break;
-            case 7:
-                query7(hz, inPath, n, clusterName);
-                break;
-            case 8:
-                timeLogger.info("Query 8 is a second implementation of query 7");
-                query7v2(hz, inPath, n, clusterName);
-                break;
-            default:
-                timeLogger.error("Wrong query number, try again using from 1 to 8");
-                System.exit(1);
-                break;
-        }
+        getList(clusterName,hz,inPath,null);
+        query1(hz, inPath, clusterName);
+        query3(hz, inPath, clusterName);
+//        query4(hz, inPath, clusterName);
+//        query5(hz, inPath, clusterName);
+//        query6(hz, inPath, n, clusterName);
+//        query7(hz, inPath, n, clusterName);
+//        query7v2(hz, inPath, n, clusterName);
+//        query2(hz, inPath, province, n);
+        System.exit(1);
 
     }
 

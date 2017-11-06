@@ -1,8 +1,0 @@
-2017-11-06 16:52:18:0289 INFO  Client:34 - pod-map-reduce Client Starting ...
-2017-11-06 16:52:18:0301 INFO  Client:53 - Connecting with cluster [53373-53248-52015-53852]
-2017-11-06 16:52:19:0497 INFO  Client:31 - Reading from file: /Users/marlanti/Documents/ITBA/POD/pod-map-reduce/client/target/classes/census/census100.csv
-2017-11-06 16:52:19:0600 INFO  Client:58 - File read
-2017-11-06 16:52:19:0601 INFO  Client:68 - File Managing Time: 104 ms
-2017-11-06 16:52:19:0602 INFO  Client:266 - Starting query
-2017-11-06 16:52:19:0673 INFO  Client:271 - Query 1 execution time: 70 ms
-2017-11-06 16:52:19:0673 INFO  Client:283 - RESULTS: {Región Buenos Aires=47, Región del Norte Grande Argentino=24, Región Centro=19, Región Patagónica=7, Región del Nuevo Cuyo=3}

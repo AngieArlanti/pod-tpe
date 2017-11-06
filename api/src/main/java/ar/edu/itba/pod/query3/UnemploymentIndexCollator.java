@@ -2,7 +2,10 @@ package ar.edu.itba.pod.query3;
 
 import com.hazelcast.mapreduce.Collator;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
