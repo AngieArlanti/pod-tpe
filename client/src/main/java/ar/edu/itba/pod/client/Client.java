@@ -13,6 +13,7 @@ import ar.edu.itba.pod.model.DepartmentNameOcurrenciesCount;
 import ar.edu.itba.pod.model.DepartmentPairOcurrenciesCount;
 import ar.edu.itba.pod.query1.ProvinceRegionMapper;
 import ar.edu.itba.pod.query1.ProvinceRegionReducerFactory;
+import ar.edu.itba.pod.query2.Query2Combiner;
 import ar.edu.itba.pod.query3.UnemploymentIndexCollator;
 import ar.edu.itba.pod.query3.UnemploymentIndexMapper;
 import ar.edu.itba.pod.query3.UnemploymentIndexReducerFactory;
@@ -215,6 +216,7 @@ public class Client {
         Job<String, Data> job = jobTracker.newJob(source);
         ICompletableFuture<Map<String, Long>> future = job
                 .mapper(new Query2Mapper())
+                .combiner(new Query2Combiner())
                 .reducer(new Query2CountReducerFactory())
                 .submit(new Query2CountCollator(n));
 
