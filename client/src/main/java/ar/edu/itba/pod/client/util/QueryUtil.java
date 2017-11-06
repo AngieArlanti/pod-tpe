@@ -34,6 +34,7 @@ import com.hazelcast.mapreduce.JobTracker;
 import com.hazelcast.mapreduce.KeyValueSource;
 import org.slf4j.Logger;
 
+import java.text.DecimalFormat;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
@@ -107,7 +108,7 @@ public class QueryUtil {
 
     public static void query3(HazelcastInstance hz, String fileName, String listName) {
         JobTracker jobTracker = hz.getJobTracker(listName);
-        IList<Data> list = getList(listName,hz,fileName,null);
+        IList<Data> list = hz.getList(listName);
 
         startExecutionTime();
         final KeyValueSource<String, Data> source = KeyValueSource.fromList( list );
@@ -121,9 +122,19 @@ public class QueryUtil {
 
 
         Map<String, Double> result = null;
-        endQuery("Query 3", future, result);
-
+        try {
+            result = future.get();
+            for (String key : result.keySet()){
+                DecimalFormat formatter = new DecimalFormat("#0.00");
+                logger.info(String.format("%s = %s", key, formatter.format(result.get(key))));
+            }
+            logExecutionTime("Query 3");
+            System.exit(0);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
+
 
     /* *********************************************************** */
     /* ************************* QUERY 4 ************************* */

@@ -42,11 +42,12 @@ import com.hazelcast.mapreduce.KeyValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.text.DecimalFormat;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 public class Test {
-    private static Logger logger = LoggerFactory.getLogger(Client.class);
+    private static Logger logger ;
     private static IMap<String, String> booksMap;
     private static long startTime;
 
@@ -184,8 +185,17 @@ public class Test {
 
 
         Map<String, Double> result = null;
-        endQuery("Query 3", future, result);
-
+        try {
+            result = future.get();
+            for (String key : result.keySet()){
+                DecimalFormat formatter = new DecimalFormat("#0.00");
+                logger.info(String.format("%s = %s", key, formatter.format(result.get(key))));
+            }
+            logExecutionTime("Query 3");
+            System.exit(0);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /* *********************************************************** */
