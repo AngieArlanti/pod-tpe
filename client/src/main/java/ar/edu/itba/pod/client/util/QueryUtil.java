@@ -128,7 +128,7 @@ public class QueryUtil {
                 outputLogger.info(String.format("%s = %s", key, formatter.format(result.get(key))));
             }
             logExecutionTime("Query 3");
-            System.exit(0);
+            //System.exit(0);
         } catch (Exception e) {
             e.printStackTrace();
         }

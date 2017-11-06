@@ -55,11 +55,11 @@ public class Client {
         getList(clusterName,hz,inPath,null);
         query1(hz, inPath, clusterName);
         query3(hz, inPath, clusterName);
-//        query4(hz, inPath, clusterName);
-//        query5(hz, inPath, clusterName);
-//        query6(hz, inPath, n, clusterName);
-//        query7(hz, inPath, n, clusterName);
-//        query7v2(hz, inPath, n, clusterName);
+        query4(hz, inPath, clusterName);
+        query5(hz, inPath, clusterName);
+        query6(hz, inPath, n, clusterName);
+        query7(hz, inPath, n, clusterName);
+        query7v2(hz, inPath, n, clusterName);
 //        query2(hz, inPath, province, n);
         System.exit(1);
 
