@@ -16,23 +16,25 @@ public class DataReader {
     final static List<String> regionCuyo = Arrays.asList("la rioja", "san juan", "san luis", "mendoza");
     final static List<String> regionBA = Arrays.asList("buenos aires", "ciudad autónoma de buenos aires");
     final static List<String> regionPatagonia = Arrays.asList("la pampa", "neuquén", "río negro", "chubut", "santa cruz", "tierra del fuego");
+    final static String DEFAULT_FILE = "census/census100.csv";
 
     public static void readToList(final IList<Data> ilist, String inFile, String provinceRestriction) {
 
-        String csvFile = "";
+        String csvFile = inFile;
         long startTime = System.nanoTime();
         try {
-            ClassLoader classLoader = Client.class.getClassLoader();
-            URL url = classLoader.getResource(inFile);
-            if (url == null)
-                throw new FileNotFoundException();
-            csvFile = classLoader.getResource(inFile).getPath();
+            InputStream is = DataReader.class.getClassLoader().getResourceAsStream(inFile);
+            if (is == null) {
+                csvFile = DEFAULT_FILE;
+                Client.getLogger().warn("File not found: " + inFile + ". Loading default file: " + csvFile);
+                is = DataReader.class.getClassLoader().getResourceAsStream(DEFAULT_FILE);
+            }
+            final Reader aReader = new InputStreamReader(is);
+            BufferedReader br = new BufferedReader(aReader);
 
             Client.getLogger().info("Reading from file: " + csvFile);
 
-            BufferedReader br;
             String line = "";
-            br = new BufferedReader(new FileReader(csvFile));
 
             while ((line = br.readLine()) != null) {
                 String[] token = line.split(",");
@@ -59,9 +61,11 @@ public class DataReader {
         } catch (FileNotFoundException e) {
             Client.getLogger().error("File not found: " + inFile);
             e.printStackTrace();
+            System.exit(1);
         } catch (IOException e) {
             Client.getLogger().error("This other strange error: ", e);
             e.printStackTrace();
+            System.exit(1);
         } finally {
             long endTime = System.nanoTime();
             long duration = (endTime - startTime);

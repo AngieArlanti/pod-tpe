@@ -275,11 +275,17 @@ public class QueryUtil {
             result = (Map) future.get();
         } catch (InterruptedException e) {
             e.printStackTrace();
+            System.exit(1);
         } catch (ExecutionException e) {
             e.printStackTrace();
+            System.exit(1);
         } finally {
             logExecutionTime(infoLog);
-            logger.info("RESULTS: "+result.toString());
+            if (result == null) {
+                logger.info("RESULTS: "+result.toString());
+            } else {
+                logger.warn("No Results");
+            }
             System.exit(0);
         }
     }
