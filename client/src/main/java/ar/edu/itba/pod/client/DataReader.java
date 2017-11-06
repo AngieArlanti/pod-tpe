@@ -28,7 +28,7 @@ public class DataReader {
                 throw new FileNotFoundException();
             csvFile = classLoader.getResource(inFile).getPath();
 
-            Client.getLogger().info("Reading from file: " + csvFile);
+            Client.getTimeLogger().info("Reading from file: " + csvFile);
 
             BufferedReader br;
             String line = "";
@@ -55,17 +55,17 @@ public class DataReader {
                     ilist.add(new Data(Integer.valueOf(token[0]), Long.valueOf(token[1]), token[2], token[3], region));
                 }
             }
-            Client.getLogger().info("File read");
+            Client.getTimeLogger().info("File read");
         } catch (FileNotFoundException e) {
-            Client.getLogger().error("File not found: " + inFile);
+            Client.getTimeLogger().error("File not found: " + inFile);
             e.printStackTrace();
         } catch (IOException e) {
-            Client.getLogger().error("This other strange error: ", e);
+            Client.getTimeLogger().error("This other strange error: ", e);
             e.printStackTrace();
         } finally {
             long endTime = System.nanoTime();
             long duration = (endTime - startTime);
-            Client.getLogger().info("File Managing Time: " + duration/1000000 + " ms");
+            Client.getTimeLogger().info("File Managing Time: " + duration/1000000 + " ms");
         }
     }
 

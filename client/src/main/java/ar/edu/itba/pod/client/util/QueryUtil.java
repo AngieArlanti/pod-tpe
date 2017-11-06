@@ -34,6 +34,7 @@ import com.hazelcast.mapreduce.JobTracker;
 import com.hazelcast.mapreduce.KeyValueSource;
 import org.slf4j.Logger;
 
+import java.text.DecimalFormat;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
@@ -42,7 +43,8 @@ import java.util.concurrent.ExecutionException;
  */
 public class QueryUtil {
 
-    private static Logger logger = Client.getLogger();
+    private static Logger timeLogger = Client.getTimeLogger();
+    private static Logger outputLogger = Client.getOutputLogger();
     private static long startTime;
 
     /* *********************************************************** */
@@ -106,7 +108,7 @@ public class QueryUtil {
 
     public static void query3(HazelcastInstance hz, String fileName, String listName) {
         JobTracker jobTracker = hz.getJobTracker(listName);
-        IList<Data> list = getList(listName,hz,fileName,null);
+        IList<Data> list = hz.getList(listName);
 
         startExecutionTime();
         final KeyValueSource<String, Data> source = KeyValueSource.fromList( list );
@@ -120,9 +122,19 @@ public class QueryUtil {
 
 
         Map<String, Double> result = null;
-        endQuery("Query 3", future, result);
-
+        try {
+            result = future.get();
+            for (String key : result.keySet()){
+                DecimalFormat formatter = new DecimalFormat("#0.00");
+                outputLogger.info(String.format("%s = %s", key, formatter.format(result.get(key))));
+            }
+            logExecutionTime("Query 3");
+            System.exit(0);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
+
 
     /* *********************************************************** */
     /* ************************* QUERY 4 ************************* */
@@ -249,7 +261,7 @@ public class QueryUtil {
                     .submit(new ProvPairCollator(n));
             Map<String, Integer> result1 = future1.get();
             for (String pairprov : result1.keySet()) {
-                logger.info(pairprov +","+ result1.get(pairprov));
+                outputLogger.info(pairprov +","+ result1.get(pairprov));
             }
         } catch (InterruptedException e1) {
 
@@ -262,12 +274,12 @@ public class QueryUtil {
 
     private static void startExecutionTime() {
         startTime = System.nanoTime();
-        logger.info("Starting query");
+        timeLogger.info("Starting query");
     }
     private static void logExecutionTime(String queryName) {
         long endTime = System.nanoTime();
         long duration = (endTime - startTime);
-        logger.info(queryName + " execution time: " + duration/1000000 + " ms");
+        timeLogger.info(queryName + " execution time: " + duration/1000000 + " ms");
     }
 
     private static void endQuery(String infoLog, ICompletableFuture future, Map result) {
@@ -279,7 +291,7 @@ public class QueryUtil {
             e.printStackTrace();
         } finally {
             logExecutionTime(infoLog);
-            logger.info("RESULTS: "+result.toString());
+            outputLogger.info("RESULTS: "+result.toString());
             System.exit(0);
         }
     }
