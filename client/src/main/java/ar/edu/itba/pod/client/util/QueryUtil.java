@@ -43,7 +43,8 @@ import java.util.concurrent.ExecutionException;
  */
 public class QueryUtil {
 
-    private static Logger logger = Client.getLogger();
+    private static Logger timeLogger = Client.getTimeLogger();
+    private static Logger outputLogger = Client.getOutputLogger();
     private static long startTime;
 
     /* *********************************************************** */
@@ -125,7 +126,7 @@ public class QueryUtil {
             result = future.get();
             for (String key : result.keySet()){
                 DecimalFormat formatter = new DecimalFormat("#0.00");
-                logger.info(String.format("%s = %s", key, formatter.format(result.get(key))));
+                outputLogger.info(String.format("%s = %s", key, formatter.format(result.get(key))));
             }
             logExecutionTime("Query 3");
             System.exit(0);
@@ -260,7 +261,7 @@ public class QueryUtil {
                     .submit(new ProvPairCollator(n));
             Map<String, Integer> result1 = future1.get();
             for (String pairprov : result1.keySet()) {
-                logger.info(pairprov +","+ result1.get(pairprov));
+                outputLogger.info(pairprov +","+ result1.get(pairprov));
             }
         } catch (InterruptedException e1) {
 
@@ -273,12 +274,12 @@ public class QueryUtil {
 
     private static void startExecutionTime() {
         startTime = System.nanoTime();
-        logger.info("Starting query");
+        timeLogger.info("Starting query");
     }
     private static void logExecutionTime(String queryName) {
         long endTime = System.nanoTime();
         long duration = (endTime - startTime);
-        logger.info(queryName + " execution time: " + duration/1000000 + " ms");
+        timeLogger.info(queryName + " execution time: " + duration/1000000 + " ms");
     }
 
     private static void endQuery(String infoLog, ICompletableFuture future, Map result) {
@@ -290,7 +291,7 @@ public class QueryUtil {
             e.printStackTrace();
         } finally {
             logExecutionTime(infoLog);
-            logger.info("RESULTS: "+result.toString());
+            outputLogger.info("RESULTS: "+result.toString());
             System.exit(0);
         }
     }

@@ -47,12 +47,17 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 public class Test {
-    private static Logger logger ;
-    private static IMap<String, String> booksMap;
+    private static Logger timeLogger ;
+    private static Logger outputLogger ;
     private static long startTime;
 
     public static void main(String[] args) throws ExecutionException, InterruptedException {
-        logger.info("pod-map-reduce Client Starting ...");
+        System.setProperty("timeFilename", "time.txt");
+        System.setProperty("outputFilename", "output.txt");
+
+        timeLogger = LoggerFactory.getLogger("time");
+        outputLogger = LoggerFactory.getLogger("output");
+        timeLogger.info("pod-map-reduce Client Starting ...");
 
         InputData input = CommandLineUtil.getInputData(args);
         int query = input.getQuery();
@@ -62,7 +67,7 @@ public class Test {
         String clusterName = input.getClusterName();
         String clusterPass = input.getClusterPass();
 
-        logger.info(String.format("Connecting with cluster [%s]", clusterName ));
+        timeLogger.info(String.format("Connecting with cluster [%s]", clusterName ));
 
         ClientConfig clientConfig = new ClientConfig();
         ClientNetworkConfig networkConfig = clientConfig.getNetworkConfig();
@@ -87,12 +92,12 @@ public class Test {
 
     private static void startExecutionTime() {
         startTime = System.nanoTime();
-        logger.info("Starting query");
+        timeLogger.info("Starting query");
     }
     private static void logExecutionTime(String queryName) {
         long endTime = System.nanoTime();
         long duration = (endTime - startTime);
-        logger.info(queryName + " execution time: " + duration/1000000 + " ms");
+        timeLogger.info(queryName + " execution time: " + duration/1000000 + " ms");
     }
     private static void endQuery(String infoLog, ICompletableFuture future, Map result) {
         try {
@@ -103,7 +108,7 @@ public class Test {
             e.printStackTrace();
         } finally {
             logExecutionTime(infoLog);
-            logger.info("RESULTS: "+result.toString());
+            outputLogger.info("RESULTS: "+result.toString());
 //            System.exit(0);
         }
     }
@@ -189,7 +194,7 @@ public class Test {
             result = future.get();
             for (String key : result.keySet()){
                 DecimalFormat formatter = new DecimalFormat("#0.00");
-                logger.info(String.format("%s = %s", key, formatter.format(result.get(key))));
+                outputLogger.info(String.format("%s = %s", key, formatter.format(result.get(key))));
             }
             logExecutionTime("Query 3");
             System.exit(0);
@@ -323,7 +328,7 @@ public class Test {
                     .submit(new ProvPairCollator(n));
             Map<String, Integer> result1 = future1.get();
             for (String pairprov : result1.keySet()) {
-                logger.info(pairprov +","+ result1.get(pairprov));
+                outputLogger.info(pairprov +","+ result1.get(pairprov));
             }
         } catch (InterruptedException e1) {
 

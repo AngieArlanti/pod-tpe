@@ -13,35 +13,26 @@ import com.hazelcast.core.HazelcastInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
 import java.util.concurrent.ExecutionException;
 
 import static ar.edu.itba.pod.client.util.QueryUtil.*;
 
 public class Client {
 
-    private static Logger logger ;
-    private static PrintWriter printWriter;
+    private static Logger timeLogger ;
+    private static Logger outputLogger ;
+
 
     public static void main(String[] args) throws ExecutionException, InterruptedException {
 
         InputData input = CommandLineUtil.getInputData(args);
-        System.setProperty("logfilename", input.getTimeOutPath().getAbsolutePath());
+        System.setProperty("timeFilename", input.getTimeOutPath().getAbsolutePath());
+        System.setProperty("outputFilename", input.getOutPathFile().getAbsolutePath());
 
-        logger = LoggerFactory.getLogger(Client.class);
-        logger.info("pod-map-reduce Client Starting ...");
-            //if(!input.getOutPathFile().exists()){
-            //    input.setOutPathFile(new File(input.getOutPathFile().getAbsolutePath()));
-            //}
-        try {
-            printWriter = new PrintWriter(input.getOutPathFile(), "UTF-8");
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
+        timeLogger = LoggerFactory.getLogger("time");
+        outputLogger = LoggerFactory.getLogger("output");
+        timeLogger.info("pod-map-reduce Client Starting ...");
+
 
         int query = input.getQuery();
         String inPath = input.getInPath();
@@ -50,7 +41,7 @@ public class Client {
         String clusterName = input.getClusterName();
         String clusterPass = input.getClusterPass();
 
-        logger.info(String.format("Connecting with cluster [%s]", clusterName ));
+        timeLogger.info(String.format("Connecting with cluster [%s]", clusterName ));
 
         ClientConfig clientConfig = new ClientConfig();
         ClientNetworkConfig networkConfig = clientConfig.getNetworkConfig();
@@ -84,20 +75,23 @@ public class Client {
                 query7(hz, inPath, n, clusterName);
                 break;
             case 8:
-                logger.info("Query 8 is a second implementation of query 7");
+                timeLogger.info("Query 8 is a second implementation of query 7");
                 query7v2(hz, inPath, n, clusterName);
                 break;
             default:
-                logger.error("Wrong query number, try again using from 1 to 8");
+                timeLogger.error("Wrong query number, try again using from 1 to 8");
                 System.exit(1);
                 break;
         }
 
     }
 
-    public static Logger getLogger() {
-        return logger;
+    public static Logger getTimeLogger() {
+        return timeLogger;
     }
 
+    public static Logger getOutputLogger() {
+        return outputLogger;
+    }
 }
 
