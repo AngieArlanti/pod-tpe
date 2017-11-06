@@ -3,8 +3,7 @@ package ar.edu.itba.pod.client;
 import ar.edu.itba.pod.client.model.InputData;
 import ar.edu.itba.pod.client.util.CommandLineUtil;
 import ar.edu.itba.pod.api.OrderStringIntMapCollator;
-import ar.edu.itba.pod.example.TokenizerMapper;
-import ar.edu.itba.pod.example.WordCountReducerFactory;
+
 
 import ar.edu.itba.pod.model.Data;
 
@@ -47,19 +46,38 @@ import com.hazelcast.mapreduce.KeyValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.math.BigDecimal;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 public class Client {
-    private static Logger logger = LoggerFactory.getLogger(Client.class);
+
+    private static Logger logger;
     private static IMap<String, String> booksMap;
     private static long startTime;
+    private static PrintWriter printWriter;
+
 
     public static void main(String[] args) throws ExecutionException, InterruptedException {
-        logger.info("pod-map-reduce Client Starting ...");
 
         InputData input = CommandLineUtil.getInputData(args);
+        System.setProperty("logfilename", input.getTimeOutPath().getAbsolutePath());
+
+        logger = LoggerFactory.getLogger(Client.class);
+        logger.info("pod-map-reduce Client Starting ...");
+            //if(!input.getOutPathFile().exists()){
+            //    input.setOutPathFile(new File(input.getOutPathFile().getAbsolutePath()));
+            //}
+        try {
+            printWriter = new PrintWriter(input.getOutPathFile(), "UTF-8");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
 
         logger.info(String.format("Connecting with cluster [%s]", input.getClusterName()));
 
@@ -78,37 +96,42 @@ public class Client {
         String province = input.getProvince();
 
 
-        switch (query) {
-            case 1:
-                query1(hz, inPath);
-                break;
-            case 2:
-                query2(hz, inPath, province, Integer.valueOf(n));
-                break;
-            case 3:
-                query3(hz, inPath);
-                break;
-            case 4:
-                query4(hz, inPath);
-                break;
-            case 5:
-                query5(hz, inPath);
-                break;
-            case 6:
-                query6(hz, inPath, Integer.valueOf(n));
-                break;
-            case 7:
-                query7(hz, inPath, Integer.valueOf(n));
-                break;
-            case 8:
-                logger.info("Query 8 is a second implementation of query 7");
-                query7v2(hz, inPath, Integer.valueOf(n));
-                break;
-            default:
-                logger.error("Wrong query number, try again using from 1 to 8");
-                System.exit(1);
-                break;
-        }
+            switch (query) {
+                case 1:
+                    query1(hz, inPath);
+                    break;
+                case 2:
+                    query2(hz, inPath, province, Integer.valueOf(n));
+                    break;
+                case 3:
+                    query3(hz, inPath);
+                    break;
+                case 4:
+                    query4(hz, inPath);
+                    break;
+                case 5:
+                    query5(hz, inPath);
+                    break;
+                case 6:
+                    query6(hz, inPath, Integer.valueOf(n));
+                    break;
+                case 7:
+                    query7(hz, inPath, Integer.valueOf(n));
+                    break;
+                case 8:
+                    logger.info("Query 8 is a second implementation of query 7");
+                    query7v2(hz, inPath, Integer.valueOf(n));
+                    break;
+                default:
+                    logger.error("Wrong query number, try again using from 1 to 8");
+                    System.exit(1);
+                    break;
+            }
+       /* } catch (Exception e) {
+            System.out.println(" Unexpected error occured ");
+            e.printStackTrace();
+            System.exit(1);
+        }*/
 
     }
 
@@ -141,41 +164,13 @@ public class Client {
             e.printStackTrace();
         } finally {
             logExecutionTime(infoLog);
+            printWriter.println("RESULTS: "+result.toString());
             logger.info("RESULTS: "+result.toString());
             System.exit(0);
         }
     }
 
-    /* *********************************************************** */
-    /* ************************* TEST Qy ************************* */
-    /* *********************************************************** */
 
-    public static void testQuery(HazelcastInstance hz) throws ExecutionException, InterruptedException {
-        JobTracker jobTracker = hz.getJobTracker("word-count");
-
-        IMap<String, String> map = getBooksMap(hz);
-        //Source es un wrapper para IMap.
-        final KeyValueSource<String, String> source = KeyValueSource.fromMap(map);
-
-        Job<String, String> job = jobTracker.newJob(source);
-        ICompletableFuture<Map<String, Long>> future = job
-                .mapper(new TokenizerMapper())
-                .reducer(new WordCountReducerFactory())
-                .submit();
-
-        Map<String, Long> result = future.get();
-        logger.info("RESULTS: " + result.toString());
-    }
-    public static IMap<String,String> getBooksMap(HazelcastInstance client) {
-        IMap<String,String> booksMap = client.getMap("books");
-
-        booksMap.put("Dracula","  3 May. Bistriz.- Left Munich at 8:35 P.M., on 1st May, arriving at");
-        booksMap.put("Dracula","Vienna early next morning; should have arrived at 6:46, but train");
-        booksMap.put("MobyDick", "This text of Melville's Moby-Dick is based on the Hendricks House edition.");
-        booksMap.put("MobyDick", "It was prepared by Professor Eugene F. Irey at the University of Colorado.");
-
-        return booksMap;
-    }
 
     /* *********************************************************** */
     /* ************************* QUERY 1 ************************* */
@@ -246,14 +241,28 @@ public class Client {
 
 
         Job<String, Data> job = jobTracker.newJob(source);
-        ICompletableFuture<Map<String, BigDecimal>> future = job
+        ICompletableFuture<Map<String, Double>> future = job
                 .mapper(new UnemploymentIndexMapper())
                 .reducer(new UnemploymentIndexReducerFactory())
                 .submit(new UnemploymentIndexCollator()); // adentro del submit recibe un collator para ordenar
 
 
-        Map<String, BigDecimal> result = null;
-        endQuery("Query 3", future, result);
+        //Map<String, Double> result = null;
+        //endQuery("Query 3", future, result);
+
+        try {
+            Map<String, Double> result = future.get();
+            for (String key : result.keySet()){
+                logger.info(String.format("%s = %.02f", key, result.get(key)));
+            }
+            logExecutionTime("Query 3");
+            System.exit(0);
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
 
     }
     private static IList<Data> getQuery3List(HazelcastInstance client, String fileName) {
@@ -429,30 +438,3 @@ public class Client {
     }
 }
 
-//    Config cfg = new Config();
-//cfg.setPort(5900);
-//cfg.setPortAutoIncrement(false);
-//
-//    NetworkConfig network = cfg.getNetworkConfig();
-//    Join join = network.getJoin();
-//join.getMulticastConfig().setEnabled(false);
-//join.getTcpIpConfig().addMember("10.45.67.32").addMember("10.45.67.100")
-//            .setRequiredMember("192.168.10.100").setEnabled(true);
-//network.getInterfaces().setEnabled(true).addInterface("10.45.67.*");
-//
-//    MapConfig mapCfg = new MapConfig();
-//mapCfg.setName("testMap");
-//mapCfg.setBackupCount(2);
-//mapCfg.getMaxSizeConfig().setSize(10000);
-//mapCfg.setTimeToLiveSeconds(300);
-//
-//    MapStoreConfig mapStoreCfg = new MapStoreConfig();
-//mapStoreCfg.setClassName("com.hazelcast.examples.DummyStore").setEnabled(true);
-//mapCfg.setMapStoreConfig(mapStoreCfg);
-//
-//    NearCacheConfig nearCacheConfig = new NearCacheConfig();
-//nearCacheConfig.setMaxSize(1000).setMaxIdleSeconds(120).setTimeToLiveSeconds(300);
-//mapCfg.setNearCacheConfig(nearCacheConfig);
-//
-//cfg.addMapConfig(mapCfg)
-//

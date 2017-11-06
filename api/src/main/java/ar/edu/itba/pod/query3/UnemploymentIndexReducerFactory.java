@@ -4,15 +4,13 @@ import ar.edu.itba.pod.model.ActivityCondition;
 import com.hazelcast.mapreduce.Reducer;
 import com.hazelcast.mapreduce.ReducerFactory;
 
-import java.math.BigDecimal;
-
-public class UnemploymentIndexReducerFactory implements ReducerFactory<String, ActivityCondition, BigDecimal> {
+public class UnemploymentIndexReducerFactory implements ReducerFactory<String, ActivityCondition, Double> {
     @Override
-    public Reducer<ActivityCondition, BigDecimal> newReducer(String s) {
+    public Reducer<ActivityCondition, Double> newReducer(String s) {
         return new UnemploymentIndexReducer();
     }
 
-    private class UnemploymentIndexReducer extends Reducer<ActivityCondition, BigDecimal> {
+    private class UnemploymentIndexReducer extends Reducer<ActivityCondition, Double> {
 
         private int desocupados;
         private int ocupados;
@@ -33,9 +31,8 @@ public class UnemploymentIndexReducerFactory implements ReducerFactory<String, A
         }
 
         @Override
-        public BigDecimal finalizeReduce() {
-            return new BigDecimal((float)desocupados/(float)(ocupados+desocupados))
-                    .setScale(2, BigDecimal.ROUND_HALF_UP);
+        public Double finalizeReduce() {
+            return (double) desocupados/(ocupados+desocupados);
         }
     }
 }
