@@ -63,11 +63,11 @@ public class Client {
         logger.info(String.format("Connecting with cluster [%s]", input.getClusterName()));
 
         ClientConfig clientConfig = new ClientConfig();
-        ClientNetworkConfig networkConfig = clientConfig.getNetworkConfig();
-        for (String address : input.getAddresses()){
-            networkConfig.addAddress(address);
-        }
-        clientConfig.getGroupConfig().setName(input.getClusterName()).setPassword(input.getClusterPass());
+//        ClientNetworkConfig networkConfig = clientConfig.getNetworkConfig();
+//        for (String address : input.getAddresses()){
+//            networkConfig.addAddress(address);
+//        }
+//        clientConfig.getGroupConfig().setName(input.getClusterName()).setPassword(input.getClusterPass());
 
         HazelcastInstance hz = HazelcastClient.newHazelcastClient(clientConfig);
 
