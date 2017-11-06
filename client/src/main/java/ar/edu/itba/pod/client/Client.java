@@ -1,5 +1,7 @@
 package ar.edu.itba.pod.client;
 
+import ar.edu.itba.pod.client.model.InputData;
+import ar.edu.itba.pod.client.util.CommandLineUtil;
 import ar.edu.itba.pod.api.OrderStringIntMapCollator;
 import ar.edu.itba.pod.example.TokenizerMapper;
 import ar.edu.itba.pod.example.WordCountReducerFactory;
@@ -31,6 +33,7 @@ import com.hazelcast.client.config.ClientConfig;
 import ar.edu.itba.pod.query2.Query2CountReducerFactory;
 import ar.edu.itba.pod.query2.Query2Mapper;
 
+import com.hazelcast.client.config.ClientNetworkConfig;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ICompletableFuture;
 import com.hazelcast.core.IList;
@@ -55,76 +58,50 @@ public class Client {
     public static void main(String[] args) throws ExecutionException, InterruptedException {
         logger.info("pod-map-reduce Client Starting ...");
 
-        String query = System.getProperty("query");
-        String file = System.getProperty("file");
-        String province = System.getProperty("province");
-        String n = System.getProperty("n");
+        InputData input = CommandLineUtil.getInputData(args);
 
-        final ClientConfig config = new ClientConfig();
-        final HazelcastInstance hz = HazelcastClient.newHazelcastClient(config);
+        logger.info(String.format("Connecting with cluster [%s]", input.getClusterName()));
 
-        if (query == null) {
-            logger.warn("No query specified, running query 1 instead");
-            System.setProperty("query", "1");
-            query = System.getProperty("query");
+        ClientConfig clientConfig = new ClientConfig();
+        ClientNetworkConfig networkConfig = clientConfig.getNetworkConfig();
+        for (String address : input.getAddresses()){
+            networkConfig.addAddress(address);
         }
+        clientConfig.getGroupConfig().setName(input.getClusterName()).setPassword(input.getClusterPass());
 
-        if (file == null) {
-            logger.warn("No database file specified, running with 'census/census100.csv' instead");
-            System.setProperty("file", "census/census100.csv");
-            file = System.getProperty("file");
-        }
+        HazelcastInstance hz = HazelcastClient.newHazelcastClient(clientConfig);
 
-        switch (Integer.valueOf(query)) {
+        int query = input.getQuery();
+        String inPath = input.getInPath();
+        Integer n = input.getN();
+        String province = input.getProvince();
+
+
+        switch (query) {
             case 1:
-                query1(hz, file);
+                query1(hz, inPath);
                 break;
             case 2:
-                if (province == null) {
-                    logger.warn("No province specified, running with 'Buenos Aires' instead");
-                    System.setProperty("province", "Buenos Aires");
-                    province = System.getProperty("province");
-                }
-                if (n == null) {
-                    logger.warn("No n specified, running with 5 instead");
-                    System.setProperty("n", "5");
-                    n = System.getProperty("n");
-                }
-                query2(hz, file, province, Integer.valueOf(n));
+                query2(hz, inPath, province, Integer.valueOf(n));
                 break;
             case 3:
-                query3(hz, file);
+                query3(hz, inPath);
                 break;
             case 4:
-                query4(hz, file);
+                query4(hz, inPath);
                 break;
             case 5:
-                query5(hz, file);
+                query5(hz, inPath);
                 break;
             case 6:
-                if (n == null) {
-                    logger.warn("No n specified, running with 5 instead");
-                    System.setProperty("n", "5");
-                    n = System.getProperty("n");
-                }
-                query6(hz, file, Integer.valueOf(n));
+                query6(hz, inPath, Integer.valueOf(n));
                 break;
             case 7:
-                if (n == null) {
-                    logger.warn("No n specified, running with 5 instead");
-                    System.setProperty("n", "5");
-                    n = System.getProperty("n");
-                }
-                query7(hz, file, Integer.valueOf(n));
+                query7(hz, inPath, Integer.valueOf(n));
                 break;
             case 8:
-                if (n == null) {
-                    logger.warn("No n specified, running with 5 instead");
-                    System.setProperty("n", "5");
-                    n = System.getProperty("n");
-                }
                 logger.info("Query 8 is a second implementation of query 7");
-                query7v2(hz, file, Integer.valueOf(n));
+                query7v2(hz, inPath, Integer.valueOf(n));
                 break;
             default:
                 logger.error("Wrong query number, try again using from 1 to 8");
@@ -175,7 +152,7 @@ public class Client {
     public static void testQuery(HazelcastInstance hz) throws ExecutionException, InterruptedException {
         JobTracker jobTracker = hz.getJobTracker("word-count");
 
-        IMap<String,String> map = getBooksMap(hz);
+        IMap<String, String> map = getBooksMap(hz);
         //Source es un wrapper para IMap.
         final KeyValueSource<String, String> source = KeyValueSource.fromMap(map);
 
@@ -186,7 +163,7 @@ public class Client {
                 .submit();
 
         Map<String, Long> result = future.get();
-        logger.info("RESULTS: "+result.toString());
+        logger.info("RESULTS: " + result.toString());
     }
     public static IMap<String,String> getBooksMap(HazelcastInstance client) {
         IMap<String,String> booksMap = client.getMap("books");
@@ -243,6 +220,7 @@ public class Client {
                 .submit(new Query2CountCollator(n));
 
         Map<String, Long> result = null;
+
         endQuery("Query 2 (with province " + provinceName + " and n " + n + ")", future, result);
     }
     private static IList<Data> getQuery2List(HazelcastInstance client, String fileName, String provinceName) {
@@ -460,3 +438,31 @@ public class Client {
         return list;
     }
 }
+
+//    Config cfg = new Config();
+//cfg.setPort(5900);
+//cfg.setPortAutoIncrement(false);
+//
+//    NetworkConfig network = cfg.getNetworkConfig();
+//    Join join = network.getJoin();
+//join.getMulticastConfig().setEnabled(false);
+//join.getTcpIpConfig().addMember("10.45.67.32").addMember("10.45.67.100")
+//            .setRequiredMember("192.168.10.100").setEnabled(true);
+//network.getInterfaces().setEnabled(true).addInterface("10.45.67.*");
+//
+//    MapConfig mapCfg = new MapConfig();
+//mapCfg.setName("testMap");
+//mapCfg.setBackupCount(2);
+//mapCfg.getMaxSizeConfig().setSize(10000);
+//mapCfg.setTimeToLiveSeconds(300);
+//
+//    MapStoreConfig mapStoreCfg = new MapStoreConfig();
+//mapStoreCfg.setClassName("com.hazelcast.examples.DummyStore").setEnabled(true);
+//mapCfg.setMapStoreConfig(mapStoreCfg);
+//
+//    NearCacheConfig nearCacheConfig = new NearCacheConfig();
+//nearCacheConfig.setMaxSize(1000).setMaxIdleSeconds(120).setTimeToLiveSeconds(300);
+//mapCfg.setNearCacheConfig(nearCacheConfig);
+//
+//cfg.addMapConfig(mapCfg)
+//
