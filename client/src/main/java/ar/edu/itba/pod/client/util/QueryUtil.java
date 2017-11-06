@@ -1,12 +1,8 @@
-package ar.edu.itba.pod.client;
-
-/**
- * Created by marlanti on 11/6/17.
- */
+package ar.edu.itba.pod.client.util;
 
 import ar.edu.itba.pod.api.OrderStringIntMapCollator;
-import ar.edu.itba.pod.client.model.InputData;
-import ar.edu.itba.pod.client.util.CommandLineUtil;
+import ar.edu.itba.pod.client.Client;
+import ar.edu.itba.pod.client.DataReader;
 import ar.edu.itba.pod.model.Data;
 import ar.edu.itba.pod.model.DepartmentNameOcurrenciesCount;
 import ar.edu.itba.pod.model.DepartmentPairOcurrenciesCount;
@@ -29,9 +25,6 @@ import ar.edu.itba.pod.query6.DepartmentCollator;
 import ar.edu.itba.pod.query6.DepartmentMapper;
 import ar.edu.itba.pod.query6.DepartmentReducerFactory;
 import ar.edu.itba.pod.query7.*;
-import com.hazelcast.client.HazelcastClient;
-import com.hazelcast.client.config.ClientConfig;
-import com.hazelcast.client.config.ClientNetworkConfig;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ICompletableFuture;
 import com.hazelcast.core.IList;
@@ -40,82 +33,26 @@ import com.hazelcast.mapreduce.Job;
 import com.hazelcast.mapreduce.JobTracker;
 import com.hazelcast.mapreduce.KeyValueSource;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
-public class Test {
-    private static Logger logger = LoggerFactory.getLogger(Client.class);
-    private static IMap<String, String> booksMap;
+/**
+ * Created by marlanti on 11/6/17.
+ */
+public class QueryUtil {
+
+    private static Logger logger = Client.getLogger();
     private static long startTime;
-
-    public static void main(String[] args) throws ExecutionException, InterruptedException {
-        logger.info("pod-map-reduce Client Starting ...");
-
-        InputData input = CommandLineUtil.getInputData(args);
-        int query = input.getQuery();
-        String inPath = input.getInPath();
-        Integer n = input.getN();
-        String province = input.getProvince();
-        String clusterName = input.getClusterName();
-        String clusterPass = input.getClusterPass();
-
-        logger.info(String.format("Connecting with cluster [%s]", clusterName ));
-
-        ClientConfig clientConfig = new ClientConfig();
-        ClientNetworkConfig networkConfig = clientConfig.getNetworkConfig();
-        for (String address : input.getAddresses()){
-            networkConfig.addAddress(address);
-        }
-        clientConfig.getGroupConfig().setName(clusterName).setPassword(clusterPass);
-
-        HazelcastInstance hz = HazelcastClient.newHazelcastClient(clientConfig);
-
-        getList(clusterName,hz,inPath,null);
-        query1(hz, inPath, clusterName);
-//        query2(hz, inPath, province, n);
-//        query3(hz, inPath, clusterName);
-//        query4(hz, inPath, clusterName);
-        query5(hz, inPath, clusterName);
-        query6(hz, inPath, n, clusterName);
-        query7(hz, inPath, n, clusterName);
-        query7v2(hz, inPath, n, clusterName);
-        System.exit(1);
-    }
-
-    private static void startExecutionTime() {
-        startTime = System.nanoTime();
-        logger.info("Starting query");
-    }
-    private static void logExecutionTime(String queryName) {
-        long endTime = System.nanoTime();
-        long duration = (endTime - startTime);
-        logger.info(queryName + " execution time: " + duration/1000000 + " ms");
-    }
-    private static void endQuery(String infoLog, ICompletableFuture future, Map result) {
-        try {
-            result = (Map) future.get();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        } finally {
-            logExecutionTime(infoLog);
-            logger.info("RESULTS: "+result.toString());
-//            System.exit(0);
-        }
-    }
-
 
     /* *********************************************************** */
     /* ************************* QUERY 1 ************************* */
     /* *********************************************************** */
 
-    private static void query1(HazelcastInstance hz, String fileName, String listName) {
+    public static void query1(HazelcastInstance hz, String fileName, String listName) {
         JobTracker jobTracker = hz.getJobTracker(listName);
 
-        IList<Data> list = hz.getList(listName);
+        IList<Data> list = getList(listName,hz,fileName,null);
         startExecutionTime();
         final KeyValueSource<String, Data> source = KeyValueSource.fromList( list );
 
@@ -129,7 +66,7 @@ public class Test {
         endQuery("Query 1", future, result);
 
     }
-    private static IList<Data> getList(String listName, HazelcastInstance client, String fileName, String provinceRestriction) {
+    public static IList<Data> getList(String listName, HazelcastInstance client, String fileName, String provinceRestriction) {
         IList<Data> list = client.getList(listName);
         list.clear();
         DataReader.readToList(list, fileName, provinceRestriction);
@@ -140,7 +77,7 @@ public class Test {
     /* ************************* QUERY 2 ************************* */
     /* *********************************************************** */
 
-    private static void query2(HazelcastInstance hz, String fileName, String provinceName, int n) {
+    public static void query2(HazelcastInstance hz, String fileName, String provinceName, int n) {
         JobTracker jobTracker = hz.getJobTracker("departmentCount");
         IList<Data> list = getQuery2List(hz, fileName, provinceName);
 
@@ -168,9 +105,9 @@ public class Test {
     /* ************************* QUERY 3 ************************* */
     /* *********************************************************** */
 
-    private static void query3(HazelcastInstance hz, String fileName, String listName) {
+    public static void query3(HazelcastInstance hz, String fileName, String listName) {
         JobTracker jobTracker = hz.getJobTracker(listName);
-        IList<Data> list = hz.getList(listName);
+        IList<Data> list = getList(listName,hz,fileName,null);
 
         startExecutionTime();
         final KeyValueSource<String, Data> source = KeyValueSource.fromList( list );
@@ -192,11 +129,11 @@ public class Test {
     /* ************************* QUERY 4 ************************* */
     /* *********************************************************** */
 
-    private static void query4(HazelcastInstance hz, String fileName, String listName) {
+    public static void query4(HazelcastInstance hz, String fileName, String listName) {
 
         JobTracker jobTracker = hz.getJobTracker(listName);
 
-        IList<Data> list = hz.getList(listName);
+        IList<Data> list = getList(listName,hz,fileName,null);
         startExecutionTime();
         final KeyValueSource<String, Data> source = KeyValueSource.fromList( list );
 
@@ -216,10 +153,10 @@ public class Test {
     /* ************************* QUERY 5 ************************* */
     /* *********************************************************** */
 
-    private static void query5(HazelcastInstance hz, String fileName, String listName) {
+    public static void query5(HazelcastInstance hz, String fileName, String listName) {
         JobTracker jobTracker = hz.getJobTracker(listName);
 
-        IList<Data> list = hz.getList(listName);
+        IList<Data> list = getList(listName,hz,fileName,null);
         startExecutionTime();
         final KeyValueSource<String, Data> source = KeyValueSource.fromList(list);
         Job<String, Data> job = jobTracker.newJob(source);
@@ -237,10 +174,10 @@ public class Test {
     /* ************************* QUERY 6 ************************* */
     /* *********************************************************** */
 
-    private static void query6(HazelcastInstance hz, String fileName, int n, String listName) {
+    public static void query6(HazelcastInstance hz, String fileName, int n, String listName) {
 
         JobTracker jobTracker = hz.getJobTracker(listName);
-        IList<Data> list = hz.getList(listName);
+        IList<Data> list = getList(listName,hz,fileName,null);
         startExecutionTime();
         final KeyValueSource<String, Data> source = KeyValueSource.fromList( list );
 
@@ -259,11 +196,11 @@ public class Test {
     /* ************************* QUERY 7 ************************* */
     /* *********************************************************** */
 
-    private static void query7(HazelcastInstance hz, String fileName, int n, String listName) {
+    public static void query7(HazelcastInstance hz, String fileName, int n, String listName) {
 
         JobTracker jobTracker = hz.getJobTracker(listName);
 
-        IList<Data> list = hz.getList(listName);
+        IList<Data> list = getList(listName,hz,fileName,null);
         startExecutionTime();
         final KeyValueSource<String, Data> source = KeyValueSource.fromList( list );
 
@@ -283,11 +220,11 @@ public class Test {
     /* ************************* QUERY 7v2 ************************* */
     /* *********************************************************** */
 
-    private static void query7v2(HazelcastInstance hz, String fileName, int n, String listName) {
+    public static void query7v2(HazelcastInstance hz, String fileName, int n, String listName) {
 
         JobTracker jobTracker = hz.getJobTracker(listName);
 
-        IList<Data> list = hz.getList(listName);
+        IList<Data> list = getList(listName,hz,fileName,null);
         startExecutionTime();
         final KeyValueSource<String, Data> source = KeyValueSource.fromList( list );
 
@@ -321,6 +258,30 @@ public class Test {
 
         } finally {
             logExecutionTime("Query 7.2 with n " + n);
+        }
+    }
+
+    private static void startExecutionTime() {
+        startTime = System.nanoTime();
+        logger.info("Starting query");
+    }
+    private static void logExecutionTime(String queryName) {
+        long endTime = System.nanoTime();
+        long duration = (endTime - startTime);
+        logger.info(queryName + " execution time: " + duration/1000000 + " ms");
+    }
+
+    private static void endQuery(String infoLog, ICompletableFuture future, Map result) {
+        try {
+            result = (Map) future.get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } finally {
+            logExecutionTime(infoLog);
+            logger.info("RESULTS: "+result.toString());
+            System.exit(0);
         }
     }
 }
