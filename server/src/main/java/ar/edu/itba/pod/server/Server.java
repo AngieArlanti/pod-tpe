@@ -11,6 +11,5 @@ public class Server {
 
     public static void main(String[] args) {
         logger.info("pod-map-reduce Server Tester Starting ...");
-        HazelcastInstance hz = Hazelcast.newHazelcastInstance();
     }
 }
