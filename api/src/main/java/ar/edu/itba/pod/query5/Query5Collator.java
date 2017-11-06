@@ -16,7 +16,7 @@ public class Query5Collator implements Collator<Map.Entry<String, Float>, Map<St
         Map<String, Float> aa = new LinkedHashMap<>();
 
         for (Map.Entry<String, Float> a : list) {
-            aa.put(a.getKey(), a.getValue());
+            aa.put(a.getKey(), (float)((int)(a.getValue() * 100))/100);
         }
         return aa;
     }

@@ -76,7 +76,6 @@ public class Client {
         Integer n = input.getN();
         String province = input.getProvince();
 
-
         switch (query) {
             case 1:
                 query1(hz, inPath);
