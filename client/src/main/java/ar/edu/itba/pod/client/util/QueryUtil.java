@@ -85,7 +85,6 @@ public class QueryUtil {
         Job<String, Data> job = jobTracker.newJob(source);
         ICompletableFuture<Map<String, Long>> future = job
                 .mapper(new Query2Mapper())
-                .combiner(new Query2Combiner())
                 .reducer(new Query2CountReducerFactory())
                 .submit(new Query2CountCollator(n));
 
