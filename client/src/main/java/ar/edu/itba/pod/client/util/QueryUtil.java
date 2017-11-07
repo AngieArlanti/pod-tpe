@@ -108,8 +108,7 @@ public class QueryUtil {
 
     public static void query3(HazelcastInstance hz, String fileName, String listName) {
         JobTracker jobTracker = hz.getJobTracker(listName);
-        IList<Data> list = hz.getList(listName);
-
+        IList<Data> list = getList(listName,hz,fileName,null);
         startExecutionTime();
         final KeyValueSource<String, Data> source = KeyValueSource.fromList( list );
 
