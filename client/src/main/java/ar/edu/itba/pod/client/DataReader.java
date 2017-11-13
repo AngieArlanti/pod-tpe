@@ -7,7 +7,9 @@ import java.io.*;
 //import java.util.ArrayList;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class DataReader {
     // FIXME I'd do everything on toLowerCase
@@ -22,6 +24,9 @@ public class DataReader {
 
         String csvFile = inFile;
         long startTime = System.nanoTime();
+        Set<Data> dataSet = null;
+        int linesRead = 0;
+        Set<Thread> threadSet = new HashSet<>();
         try {
             InputStream is = DataReader.class.getClassLoader().getResourceAsStream(inFile);
             if (is == null) {
@@ -37,6 +42,9 @@ public class DataReader {
             String line = "";
 
             while ((line = br.readLine()) != null) {
+                if(linesRead == 0){
+                    dataSet = new HashSet<>();
+                }
                 String[] token = line.split(",");
                 String region = "";
                 String provincia = token[3].toLowerCase();
@@ -54,9 +62,32 @@ public class DataReader {
                     else
                         region = "Región sin definir";
 
-                    ilist.add(new Data(Integer.valueOf(token[0]), Long.valueOf(token[1]), token[2], token[3], region));
+                    //ilist.add(new Data(Integer.valueOf(token[0]), Long.valueOf(token[1]), token[2], token[3], region));
+                    if(linesRead < 3000){
+                        dataSet.add(new Data(Integer.valueOf(token[0]), Long.valueOf(token[1]), token[2], token[3], region));
+                        linesRead ++;
+                    }
+                    else {
+                        Thread t = new Thread(new Lodader(ilist, dataSet));
+                        t.run();
+                        threadSet.add(t);
+                        linesRead = 0;
+                    }
                 }
             }
+            //ilist.addAll(set);
+            if (linesRead != 0){
+                Thread t = new Thread(new Lodader(ilist, dataSet));
+                t.start();
+                threadSet.add(t);
+            }
+
+            for (Thread t: threadSet) {
+                if(t.isAlive()){
+                    t.join();
+                }
+            }
+
             Client.getTimeLogger().info("File read");
         } catch (FileNotFoundException e) {
             Client.getTimeLogger().error("File not found: " + inFile);
@@ -66,6 +97,8 @@ public class DataReader {
             Client.getTimeLogger().error("This other strange error: ", e);
             e.printStackTrace();
             System.exit(1);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         } finally {
             long endTime = System.nanoTime();
             long duration = (endTime - startTime);
@@ -73,4 +106,19 @@ public class DataReader {
         }
     }
 
+    private static class Lodader implements Runnable {
+
+        private IList<Data> ilist;
+        private Set<Data> set;
+
+        public Lodader(IList<Data> ilist, Set<Data> set) {
+            this.ilist = ilist;
+            this.set = set;
+        }
+
+        @Override
+        public void run() {
+            ilist.addAll(set);
+        }
+    }
 }
